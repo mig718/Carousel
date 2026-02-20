@@ -1,0 +1,20 @@
+{
+  "collectCoverageFrom": [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/index.tsx"
+  ],
+  "coveragePathIgnorePatterns": [
+    "/node_modules/"
+  ],
+  "testEnvironment": "jsdom",
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@components/(.*)$": "<rootDir>/src/components/$1",
+    "^@pages/(.*)$": "<rootDir>/src/pages/$1",
+    "^@redux/(.*)$": "<rootDir>/src/redux/$1",
+    "^@services/(.*)$": "<rootDir>/src/services/$1",
+    "^@types/(.*)$": "<rootDir>/src/types/$1"
+  },
+  "preset": "ts-jest"
+}

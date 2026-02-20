@@ -1,0 +1,10 @@
+﻿spring:
+  application:
+    name: auth-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/carousel_auth_test
+
+server:
+  port: 8001
+

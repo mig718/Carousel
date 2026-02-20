@@ -1,0 +1,10 @@
+﻿spring:
+  application:
+    name: approval-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/carousel_approval_test
+
+server:
+  port: 8003
+
