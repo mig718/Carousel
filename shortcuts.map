@@ -1,0 +1,8 @@
+# Service Shortcuts Mapping File
+# Format: SHORTCUT:SERVICE_NAME:FULL_PATH:PORT:HEALTH_URL
+# This file maps service shortcuts to their full names and configuration for build/launch scripts
+
+auth:auth-service:./backend/auth-service:8001:http://localhost:8001/api/auth/health
+user:user-service:./backend/user-service:8002:http://localhost:8002/api/users/health
+approve:approval-service:./backend/approval-service:8003:http://localhost:8003/api/approvals/health
+gateway:api-gateway:./backend/api-gateway:8000:http://localhost:8000/health
