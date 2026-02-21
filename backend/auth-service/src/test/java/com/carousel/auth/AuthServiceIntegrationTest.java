@@ -1,4 +1,4 @@
-﻿package com.carousel.auth;
+package com.carousel.auth;
 
 import com.carousel.auth.domain.Credential;
 import com.carousel.auth.repository.CredentialRepository;

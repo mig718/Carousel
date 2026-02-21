@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.service;
+package com.carousel.auth.service;
 
 import com.carousel.auth.domain.Credential;
 import com.carousel.auth.dto.LoginRequest;

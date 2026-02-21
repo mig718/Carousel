@@ -1,4 +1,4 @@
-﻿package com.carousel.approval.exception;
+package com.carousel.approval.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

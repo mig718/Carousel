@@ -1,4 +1,4 @@
-﻿package com.carousel.user.client;
+package com.carousel.user.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;

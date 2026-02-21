@@ -1,4 +1,4 @@
-﻿package com.carousel.approval.repository;
+package com.carousel.approval.repository;
 
 import com.carousel.approval.domain.ApprovalRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;

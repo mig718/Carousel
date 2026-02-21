@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.dto;
+package com.carousel.auth.dto;
 
 public class ValidateTokenRequest {
     private String token;

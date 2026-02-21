@@ -1,4 +1,4 @@
-﻿package com.carousel.user.client.dto;
+package com.carousel.user.client.dto;
 
 public class RegisterCredentialRequest {
     private String email;

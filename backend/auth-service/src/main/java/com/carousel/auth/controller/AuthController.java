@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.controller;
+package com.carousel.auth.controller;
 
 import com.carousel.auth.dto.LoginRequest;
 import com.carousel.auth.dto.LoginResponse;

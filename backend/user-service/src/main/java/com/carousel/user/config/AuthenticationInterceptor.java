@@ -1,4 +1,4 @@
-﻿package com.carousel.user.config;
+package com.carousel.user.config;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

@@ -1,4 +1,4 @@
-﻿package com.carousel.user.exception;
+package com.carousel.user.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

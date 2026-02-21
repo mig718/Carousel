@@ -1,4 +1,4 @@
-﻿package com.carousel.user.dto;
+package com.carousel.user.dto;
 
 public class LoginResponse {
     private String token;

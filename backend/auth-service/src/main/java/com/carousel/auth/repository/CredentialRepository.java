@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.repository;
+package com.carousel.auth.repository;
 
 import com.carousel.auth.domain.Credential;
 import org.springframework.data.mongodb.repository.MongoRepository;
