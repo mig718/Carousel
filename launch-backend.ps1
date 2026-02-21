@@ -1,15 +1,12 @@
 ﻿# Launch script for Carousel backend services only
 # Starts backend microservices sequentially, validates readiness, and opens a single aggregated Swagger UI tab
+# Uses service shortcuts from shortcuts.map for configuration
 
 [CmdletBinding(PositionalBinding = $false)]
 param(
     [switch]$Fast,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$RemainingArgs,
-    [int]$ApiGatewayPort = 8000,
-    [int]$AuthServicePort = 8001,
-    [int]$UserServicePort = 8002,
-    [int]$ApprovalServicePort = 8003,
     [int]$HealthServicePort = 8004,
     [int]$MongoPort = 27017,
     [int]$StartupTimeoutSeconds = 120,
@@ -22,8 +19,18 @@ $UseJarStartup = $Fast -or ($RemainingArgs -contains "--fast") -or ($args -conta
 $CheckMark = [char]0x2713
 $CrossMark = [char]0x2717
 
+# Import service map helper
+Import-Module -Name ".\ServiceMap.psm1" -Force
+
 function Write-ColorOutput($color, $message) {
     Write-Host $message -ForegroundColor $color
+}
+
+# Load service map
+$ServiceMap = Get-ServiceMap ".\shortcuts.map"
+if (-not $ServiceMap) {
+    Write-ColorOutput "Red" "Failed to load service map"
+    exit 1
 }
 
 function Test-PortOpen($port) {
@@ -430,23 +437,25 @@ $healthServiceResult = $null
 
 # If -Service is specified, only start the matching service
 if ($Service) {
-    $serviceKey = $Service.Trim().ToLower()
-    switch ($serviceKey) {
-        "auth" { $services = @($services[0]) }
-        "auth-service" { $services = @($services[0]) }
-        "user" { $services = @($services[1]) }
-        "user-service" { $services = @($services[1]) }
-        "approve" { $services = @($services[2]) }
-        "approval" { $services = @($services[2]) }
-        "approval-service" { $services = @($services[2]) }
-        "gateway" { $services = @($services[3]) }
-        "api" { $services = @($services[3]) }
-        "api-gateway" { $services = @($services[3]) }
-        default {
-            Write-ColorOutput "Red" "[-] Unknown service: $Service. Valid values: auth, user, approve (or approval), gateway."
-            exit 1
-        }
+    $selectedService = Get-ServiceByShortcut $ServiceMap $Service
+    if (-not $selectedService) {
+        Write-ColorOutput "Red" "[-] Unknown service: $Service."
+        $shortcuts = Get-AllServiceShortcuts $ServiceMap
+        Write-ColorOutput "Yellow" "Valid values: $($shortcuts -join ', ')"
+        exit 1
     }
+    
+    # Build a services array with only the selected service
+    $serviceDef = [PSCustomObject]@{
+        Name = $selectedService.Name
+        Version = $BackendVersion
+        Dir = $selectedService.Path
+        JarPath = ".\$($selectedService.Path)\target\$($selectedService.Name)-$BackendVersion.jar"
+        Port = $selectedService.Port
+        ReadinessUrl = $selectedService.HealthUrl
+        ExtraArgs = @("-Dspring.jmx.enabled=false", "-Dspring-boot.run.arguments=--spring.profiles.active=local")
+    }
+    $services = @($serviceDef)
 }
 
 foreach ($serviceDef in $services) {
