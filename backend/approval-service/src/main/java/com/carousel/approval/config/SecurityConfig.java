@@ -1,4 +1,4 @@
-﻿package com.carousel.approval.config;
+package com.carousel.approval.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

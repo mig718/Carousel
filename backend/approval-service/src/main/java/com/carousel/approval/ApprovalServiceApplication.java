@@ -1,4 +1,4 @@
-﻿package com.carousel.approval;
+package com.carousel.approval;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

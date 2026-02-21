@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.exception;
+package com.carousel.auth.exception;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import org.slf4j.Logger;

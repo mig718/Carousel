@@ -1,4 +1,4 @@
-﻿package com.carousel.auth.controller;
+package com.carousel.auth.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,4 +1,4 @@
-﻿package com.carousel.user.dto;
+package com.carousel.user.dto;
 
 import com.carousel.user.domain.AccessLevel;
 

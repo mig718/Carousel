@@ -1,4 +1,4 @@
-﻿package com.carousel.approval.client;
+package com.carousel.approval.client;
 
 import com.carousel.approval.dto.UserDto;
 import org.springframework.cloud.openfeign.FeignClient;

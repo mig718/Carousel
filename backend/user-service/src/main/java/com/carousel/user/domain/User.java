@@ -1,4 +1,4 @@
-﻿package com.carousel.user.domain;
+package com.carousel.user.domain;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;

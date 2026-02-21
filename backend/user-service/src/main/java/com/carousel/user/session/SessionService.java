@@ -1,4 +1,4 @@
-﻿package com.carousel.user.session;
+package com.carousel.user.session;
 
 import com.carousel.user.domain.User;
 import io.jsonwebtoken.*;

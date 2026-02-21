@@ -1,4 +1,4 @@
-﻿package com.carousel.approval;
+package com.carousel.approval;
 
 import com.carousel.approval.repository.ApprovalRequestRepository;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-﻿package com.carousel.approval.dto;
+package com.carousel.approval.dto;
 
 public class CreateApprovalRequest {
     private String pendingUserId;

@@ -1,4 +1,4 @@
-﻿package com.carousel.approval;
+package com.carousel.approval;
 
 import com.carousel.approval.domain.ApprovalRequest;
 import com.carousel.approval.repository.ApprovalRequestRepository;

@@ -1,4 +1,4 @@
-﻿package com.carousel.user;
+package com.carousel.user;
 
 import com.carousel.user.domain.AccessLevel;
 import com.carousel.user.domain.PendingUser;

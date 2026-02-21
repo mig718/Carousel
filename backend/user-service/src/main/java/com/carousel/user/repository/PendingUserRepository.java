@@ -1,4 +1,4 @@
-﻿package com.carousel.user.repository;
+package com.carousel.user.repository;
 
 import com.carousel.user.domain.PendingUser;
 import org.springframework.data.mongodb.repository.MongoRepository;
