@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: role-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/carousel_roles
+
+server:
+  port: 8004
+  servlet:
+    context-path: /api/roles
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    instance-id: ${spring.application.name}:${random.value}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

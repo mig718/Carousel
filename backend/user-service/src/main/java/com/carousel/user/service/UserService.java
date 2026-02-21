@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import com.carousel.user.client.AuthServiceClient;
+import com.carousel.user.client.role.RoleServiceClient;
 import com.carousel.user.client.dto.RegisterCredentialRequest;
 import org.springframework.stereotype.Service;
 
@@ -27,12 +28,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final PendingUserRepository pendingUserRepository;
     private final AuthServiceClient authServiceClient;
+    private final RoleServiceClient roleServiceClient;
     private JavaMailSender javaMailSender;
 
-    public UserService(UserRepository userRepository, PendingUserRepository pendingUserRepository, AuthServiceClient authServiceClient) {
+    public UserService(
+            UserRepository userRepository,
+            PendingUserRepository pendingUserRepository,
+            AuthServiceClient authServiceClient,
+            RoleServiceClient roleServiceClient
+    ) {
         this.userRepository = userRepository;
         this.pendingUserRepository = pendingUserRepository;
         this.authServiceClient = authServiceClient;
+        this.roleServiceClient = roleServiceClient;
     }
 
     @Autowired(required = false)
@@ -51,13 +59,14 @@ public class UserService {
         }
 
         String verificationToken = UUID.randomUUID().toString();
+        AccessLevel requestedAccessLevel = request.getAccessLevel() == null ? AccessLevel.User : request.getAccessLevel();
         
         PendingUser pendingUser = PendingUser.builder()
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .email(request.getEmail())
             .password(request.getPassword())
-            .requestedAccessLevel(request.getAccessLevel())
+            .requestedAccessLevel(requestedAccessLevel)
             .emailVerificationToken(verificationToken)
             .emailVerified(false)
             .createdAt(LocalDateTime.now())
@@ -69,7 +78,7 @@ public class UserService {
         // Send verification email
         sendVerificationEmail(request.getEmail(), verificationToken);
 
-        boolean requiresApproval = request.getAccessLevel() != AccessLevel.ReadOnly;
+        boolean requiresApproval = requestedAccessLevel == AccessLevel.Admin;
 
         return RegisterResponse.builder()
                 .userId(pendingUser.getId())
@@ -119,6 +128,7 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+        assignDefaultRoleQuietly(user.getEmail());
 
         // Remove password from PendingUser for security before deleting
         pendingUser.setPassword(null);
@@ -132,17 +142,35 @@ public class UserService {
         return convertToDto(user);
     }
 
+    public UserDto getCurrentUserByEmail(String email) {
+        return getUserByEmail(email);
+    }
+
     public UserDto getUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return convertToDto(user);
     }
 
-    public List<UserDto> getUsersByAccessLevel(AccessLevel accessLevel) {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getAccessLevel().ordinal() >= accessLevel.ordinal())
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+    public UserDto updateOwnProfile(String email, String firstName, String lastName) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+        return convertToDto(user);
+    }
+
+    public void updateAccessLevelInternal(String userId, AccessLevel accessLevel) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setAccessLevel(accessLevel);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 
     public List<PendingUserDto> getVerifiedPendingUsers() {
@@ -155,14 +183,14 @@ public class UserService {
      * Create a user directly (bypass pending workflow) - only Support and Admin roles allowed.
      * User must still verify their email before accessing the system.
      */
-    public UserDto createUserDirectly(String firstName, String lastName, String email, AccessLevel accessLevel, AccessLevel requesterAccessLevel) {
-        // Check if requester has sufficient privileges (Support or Admin)
-        if (requesterAccessLevel.ordinal() < AccessLevel.Support.ordinal()) {
-            throw new RuntimeException("Insufficient privileges to create users");
+    public UserDto createUserDirectly(String firstName, String lastName, String email, AccessLevel accessLevel, String requesterEmail) {
+        if (!canManageUsers(requesterEmail)) {
+            throw new RuntimeException("Insufficient role privileges to create users");
         }
 
-        // Prevent creation of Admin users by Support (only Admin can create Admin)
-        if (accessLevel == AccessLevel.Admin && requesterAccessLevel != AccessLevel.Admin) {
+        AccessLevel effectiveAccessLevel = accessLevel == null ? AccessLevel.User : accessLevel;
+
+        if (effectiveAccessLevel == AccessLevel.Admin && !isAdmin(requesterEmail)) {
             throw new RuntimeException("Only Admin users can create Admin users");
         }
 
@@ -183,7 +211,7 @@ public class UserService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .accessLevel(accessLevel)
+            .accessLevel(effectiveAccessLevel)
                 .emailVerificationToken(verificationToken)
                 .emailVerified(false)
                 .createdAt(LocalDateTime.now())
@@ -191,6 +219,7 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+        assignDefaultRoleQuietly(user.getEmail());
         sendVerificationEmail(email, verificationToken);
 
         return convertToDto(user);
@@ -200,29 +229,28 @@ public class UserService {
      * Update user information - only Support and Admin roles allowed.
      * Cannot downgrade Admin users to lower access level.
      */
-    public UserDto updateUser(String userId, String firstName, String lastName, AccessLevel newAccessLevel, AccessLevel requesterAccessLevel) {
-        // Check if requester has sufficient privileges
-        if (requesterAccessLevel.ordinal() < AccessLevel.Support.ordinal()) {
-            throw new RuntimeException("Insufficient privileges to update users");
+    public UserDto updateUser(String userId, String firstName, String lastName, AccessLevel newAccessLevel, String requesterEmail) {
+        if (!canManageUsers(requesterEmail)) {
+            throw new RuntimeException("Insufficient role privileges to update users");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Prevent downgrading Admin users (only Admin can change Admin user access level)
+        AccessLevel effectiveNewAccessLevel = newAccessLevel == null ? user.getAccessLevel() : newAccessLevel;
+
         if (user.getAccessLevel() == AccessLevel.Admin && 
-            (newAccessLevel != AccessLevel.Admin || requesterAccessLevel != AccessLevel.Admin)) {
+            (effectiveNewAccessLevel != AccessLevel.Admin || !isAdmin(requesterEmail))) {
             throw new RuntimeException("Cannot downgrade Admin users");
         }
 
-        // Prevent Support users from creating Admin users
-        if (newAccessLevel == AccessLevel.Admin && requesterAccessLevel != AccessLevel.Admin) {
+        if (effectiveNewAccessLevel == AccessLevel.Admin && !isAdmin(requesterEmail)) {
             throw new RuntimeException("Only Admin users can assign Admin access level");
         }
 
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setAccessLevel(newAccessLevel);
+        user.setAccessLevel(effectiveNewAccessLevel);
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
@@ -232,17 +260,15 @@ public class UserService {
     /**
      * Delete user - only Admin role allowed.
      */
-    public void deleteUser(String userId, AccessLevel requesterAccessLevel) {
-        // Only Admin can delete users
-        if (requesterAccessLevel != AccessLevel.Admin) {
-            throw new RuntimeException("Insufficient privileges to delete users");
+    public void deleteUser(String userId, String requesterEmail) {
+        if (!canManageUsers(requesterEmail)) {
+            throw new RuntimeException("Insufficient role privileges to delete users");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Prevent deletion of other Admin users
-        if (user.getAccessLevel() == AccessLevel.Admin && !user.getId().equals(userId)) {
+        if (user.getAccessLevel() == AccessLevel.Admin && !isAdmin(requesterEmail)) {
             throw new RuntimeException("Cannot delete other Admin users");
         }
 
@@ -252,15 +278,40 @@ public class UserService {
     /**
      * List all users - Support and Admin can view users up to their level or below.
      */
-    public List<UserDto> getAllUsers(AccessLevel requesterAccessLevel) {
-        // Check if requester has sufficient privileges
-        if (requesterAccessLevel.ordinal() < AccessLevel.Support.ordinal()) {
-            throw new RuntimeException("Insufficient privileges to list users");
+    public List<UserDto> getAllUsers(String requesterEmail) {
+        if (!canManageUsers(requesterEmail)) {
+            throw new RuntimeException("Insufficient role privileges to list users");
         }
 
         return userRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    private boolean canManageUsers(String requesterEmail) {
+        if (isAdmin(requesterEmail)) {
+            return true;
+        }
+
+        try {
+            Boolean hasSupportRole = roleServiceClient.userHasRole(requesterEmail, "Support");
+            return Boolean.TRUE.equals(hasSupportRole);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isAdmin(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> user.getAccessLevel() == AccessLevel.Admin)
+                .orElse(false);
+    }
+
+    private void assignDefaultRoleQuietly(String userEmail) {
+        try {
+            roleServiceClient.assignDefaultRole(userEmail);
+        } catch (Exception e) {
+        }
     }
 
     private void sendVerificationEmail(String email, String token) {

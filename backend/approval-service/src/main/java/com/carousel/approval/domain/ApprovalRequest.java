@@ -10,10 +10,12 @@ public class ApprovalRequest {
     @Id
     private String id;
     private String pendingUserId;
+    private String targetUserId;
     private String email;
     private String firstName;
     private String lastName;
     private String requestedAccessLevel;
+    private String requestType;
     private boolean approved;
     private String approvedBy;
     private LocalDateTime createdAt;
@@ -21,13 +23,15 @@ public class ApprovalRequest {
 
     public ApprovalRequest() {}
 
-    public ApprovalRequest(String id, String pendingUserId, String email, String firstName, String lastName, String requestedAccessLevel, boolean approved, String approvedBy, LocalDateTime createdAt, LocalDateTime approvedAt) {
+    public ApprovalRequest(String id, String pendingUserId, String targetUserId, String email, String firstName, String lastName, String requestedAccessLevel, String requestType, boolean approved, String approvedBy, LocalDateTime createdAt, LocalDateTime approvedAt) {
         this.id = id;
         this.pendingUserId = pendingUserId;
+        this.targetUserId = targetUserId;
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
         this.requestedAccessLevel = requestedAccessLevel;
+        this.requestType = requestType;
         this.approved = approved;
         this.approvedBy = approvedBy;
         this.createdAt = createdAt;
@@ -38,6 +42,8 @@ public class ApprovalRequest {
     public void setId(String id) { this.id = id; }
     public String getPendingUserId() { return pendingUserId; }
     public void setPendingUserId(String pendingUserId) { this.pendingUserId = pendingUserId; }
+    public String getTargetUserId() { return targetUserId; }
+    public void setTargetUserId(String targetUserId) { this.targetUserId = targetUserId; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getFirstName() { return firstName; }
@@ -46,6 +52,8 @@ public class ApprovalRequest {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public String getRequestedAccessLevel() { return requestedAccessLevel; }
     public void setRequestedAccessLevel(String requestedAccessLevel) { this.requestedAccessLevel = requestedAccessLevel; }
+    public String getRequestType() { return requestType; }
+    public void setRequestType(String requestType) { this.requestType = requestType; }
     public boolean isApproved() { return approved; }
     public void setApproved(boolean approved) { this.approved = approved; }
     public String getApprovedBy() { return approvedBy; }
@@ -62,10 +70,12 @@ public class ApprovalRequest {
     public static class ApprovalRequestBuilder {
         private String id;
         private String pendingUserId;
+        private String targetUserId;
         private String email;
         private String firstName;
         private String lastName;
         private String requestedAccessLevel;
+        private String requestType;
         private boolean approved;
         private String approvedBy;
         private LocalDateTime createdAt;
@@ -73,17 +83,19 @@ public class ApprovalRequest {
 
         public ApprovalRequestBuilder id(String id) { this.id = id; return this; }
         public ApprovalRequestBuilder pendingUserId(String pendingUserId) { this.pendingUserId = pendingUserId; return this; }
+        public ApprovalRequestBuilder targetUserId(String targetUserId) { this.targetUserId = targetUserId; return this; }
         public ApprovalRequestBuilder email(String email) { this.email = email; return this; }
         public ApprovalRequestBuilder firstName(String firstName) { this.firstName = firstName; return this; }
         public ApprovalRequestBuilder lastName(String lastName) { this.lastName = lastName; return this; }
         public ApprovalRequestBuilder requestedAccessLevel(String requestedAccessLevel) { this.requestedAccessLevel = requestedAccessLevel; return this; }
+        public ApprovalRequestBuilder requestType(String requestType) { this.requestType = requestType; return this; }
         public ApprovalRequestBuilder approved(boolean approved) { this.approved = approved; return this; }
         public ApprovalRequestBuilder approvedBy(String approvedBy) { this.approvedBy = approvedBy; return this; }
         public ApprovalRequestBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ApprovalRequestBuilder approvedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; return this; }
 
         public ApprovalRequest build() {
-            return new ApprovalRequest(id, pendingUserId, email, firstName, lastName, requestedAccessLevel, approved, approvedBy, createdAt, approvedAt);
+            return new ApprovalRequest(id, pendingUserId, targetUserId, email, firstName, lastName, requestedAccessLevel, requestType, approved, approvedBy, createdAt, approvedAt);
         }
     }
 }

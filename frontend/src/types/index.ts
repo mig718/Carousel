@@ -1,7 +1,16 @@
 export enum AccessLevel {
-  ReadOnly = 'ReadOnly',
-  ReadWrite = 'ReadWrite',
+  User = 'User',
   Admin = 'Admin'
+}
+
+export interface Role {
+  name: string;
+  description: string;
+}
+
+export interface RoleAssignmentRequest {
+  userEmail: string;
+  roleName: string;
 }
 
 export interface User {
@@ -51,9 +60,17 @@ export interface RegisterResponse {
 export interface ApprovalRequest {
   id: string;
   pendingUserId: string;
+  targetUserId?: string;
   email: string;
   firstName: string;
   lastName: string;
   requestedAccessLevel: AccessLevel;
+  requestType?: 'NEW_USER' | 'ACCESS_UPGRADE';
+  createdAt?: string;
   approved: boolean;
+}
+
+export interface UpdateOwnProfileRequest {
+  firstName: string;
+  lastName: string;
 }

@@ -9,6 +9,9 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
 import DashboardPage from './pages/DashboardPage';
 import ApprovalsPage from './pages/ApprovalsPage';
+import ProfilePage from './pages/ProfilePage';
+import UsersPage from './pages/UsersPage';
+import RolesPage from './pages/RolesPage';
 
 import './App.css';
 
@@ -44,6 +47,30 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <ApprovalsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roles"
+          element={
+            <ProtectedRoute>
+              <RolesPage />
             </ProtectedRoute>
           }
         />

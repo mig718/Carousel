@@ -2,14 +2,10 @@ package com.carousel.user.controller;
 
 import com.carousel.user.domain.AccessLevel;
 import com.carousel.user.dto.*;
-import com.carousel.user.repository.UserRepository;
 import com.carousel.user.service.UserService;
-import com.carousel.user.session.SessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +15,9 @@ import java.util.List;
 @Tag(name = "User Management", description = "User management and enrollment endpoints")
 public class UserController {
     private final UserService userService;
-    private final UserRepository userRepository;
-    private final SessionService sessionService;
 
-    public UserController(UserService userService, UserRepository userRepository, SessionService sessionService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userRepository = userRepository;
-        this.sessionService = sessionService;
     }
 
     @PostMapping("/register")
@@ -53,10 +45,18 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
-    @GetMapping("/access-level/{accessLevel}")
-    @Operation(summary = "Get users by access level", description = "Get all users with equal or higher access level")
-    public ResponseEntity<List<UserDto>> getUsersByAccessLevel(@PathVariable AccessLevel accessLevel) {
-        return ResponseEntity.ok(userService.getUsersByAccessLevel(accessLevel));
+    @GetMapping("/me")
+    @Operation(summary = "Get current user profile", description = "Get current authenticated user's profile")
+    public ResponseEntity<UserDto> getCurrentUser(@RequestParam String email) {
+        return ResponseEntity.ok(userService.getCurrentUserByEmail(email));
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Update current user profile", description = "Update current authenticated user's profile")
+    public ResponseEntity<UserDto> updateCurrentUser(
+            @RequestBody UpdateOwnProfileRequest request,
+            @RequestParam String email) {
+        return ResponseEntity.ok(userService.updateOwnProfile(email, request.getFirstName(), request.getLastName()));
     }
 
     @GetMapping("/pending/verified")
@@ -75,14 +75,13 @@ public class UserController {
     // Admin endpoints for user management
     @PostMapping("/admin/create")
     @Operation(summary = "Create user directly (Admin only)", description = "Create a user directly bypassing pending workflow - Support/Admin only")
-    public ResponseEntity<UserDto> createUserDirectly(@RequestBody DirectUserCreationRequest request, @RequestHeader("Authorization") String authHeader) {
-        AccessLevel requesterAccessLevel = getAccessLevelFromToken(authHeader);
+    public ResponseEntity<UserDto> createUserDirectly(@RequestBody DirectUserCreationRequest request, @RequestParam String requesterEmail) {
         return ResponseEntity.ok(userService.createUserDirectly(
                 request.getFirstName(),
                 request.getLastName(),
                 request.getEmail(),
                 request.getAccessLevel(),
-                requesterAccessLevel
+                requesterEmail
         ));
     }
 
@@ -91,44 +90,36 @@ public class UserController {
         public ResponseEntity<UserDto> updateUser(
             @PathVariable String userId,
             @RequestBody UpdateUserRequest request,
-            @RequestHeader("Authorization") String authHeader) {
-        AccessLevel requesterAccessLevel = getAccessLevelFromToken(authHeader);
+            @RequestParam String requesterEmail) {
         return ResponseEntity.ok(userService.updateUser(
             userId,
             request.getFirstName(),
             request.getLastName(),
             request.getAccessLevel(),
-            requesterAccessLevel
+            requesterEmail
         ));
         }
 
     @DeleteMapping("/admin/{userId}")
     @Operation(summary = "Delete user (Admin only)", description = "Delete a user - Admin only")
-    public ResponseEntity<String> deleteUser(@PathVariable String userId, @RequestHeader("Authorization") String authHeader) {
-        AccessLevel requesterAccessLevel = getAccessLevelFromToken(authHeader);
-        userService.deleteUser(userId, requesterAccessLevel);
+    public ResponseEntity<String> deleteUser(@PathVariable String userId, @RequestParam String requesterEmail) {
+        userService.deleteUser(userId, requesterEmail);
         return ResponseEntity.ok("User deleted successfully");
     }
 
     @GetMapping("/admin/all")
     @Operation(summary = "List all users (Admin only)", description = "List all users in the system - Support/Admin only")
-    public ResponseEntity<List<UserDto>> getAllUsers(@RequestHeader("Authorization") String authHeader) {
-        AccessLevel requesterAccessLevel = getAccessLevelFromToken(authHeader);
-        return ResponseEntity.ok(userService.getAllUsers(requesterAccessLevel));
+    public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam String requesterEmail) {
+        return ResponseEntity.ok(userService.getAllUsers(requesterEmail));
     }
 
-    // Extract access level from JWT token
-    private AccessLevel getAccessLevelFromToken(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Not authenticated");
-        }
-        String token = authHeader.replace("Bearer ", "");
-        try {
-            String accessLevel = sessionService.getAccessLevelFromToken(token);
-            return AccessLevel.valueOf(accessLevel);
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid or expired session");
-        }
+    @PutMapping("/internal/{userId}/access-level")
+    @Operation(summary = "Update user access level internally", description = "Internal endpoint used by approval-service")
+    public ResponseEntity<String> updateAccessLevelInternal(
+            @PathVariable String userId,
+            @RequestParam AccessLevel accessLevel) {
+        userService.updateAccessLevelInternal(userId, accessLevel);
+        return ResponseEntity.ok("Access level updated successfully");
     }
 }
 

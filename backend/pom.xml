@@ -15,6 +15,7 @@
         <module>auth-service</module>
         <module>user-service</module>
         <module>approval-service</module>
+        <module>role-service</module>
         <module>api-gateway</module>
     </modules>
 

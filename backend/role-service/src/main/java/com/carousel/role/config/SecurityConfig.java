@@ -1,11 +1,10 @@
-package com.carousel.user.config;
+package com.carousel.role.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-
 
 @Configuration
 public class SecurityConfig {
@@ -20,13 +19,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/health",
-                                "/api/users/health",
-                                "/login",
-                                "/register",
-                                "/api/users/register",
-                                "/verify-email",
-                                "/email/**",
-                                "/approve/**",
+                                "/api/roles/health",
                                 "/internal/**"
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -36,4 +29,3 @@ public class SecurityConfig {
         return http.build();
     }
 }
-

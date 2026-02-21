@@ -3,21 +3,27 @@ package com.carousel.approval.dto;
 public class ApprovalDto {
     private String id;
     private String pendingUserId;
+    private String targetUserId;
     private String email;
     private String firstName;
     private String lastName;
     private String requestedAccessLevel;
+    private String requestType;
+    private java.time.LocalDateTime createdAt;
     private boolean approved;
 
     public ApprovalDto() {}
 
-    public ApprovalDto(String id, String pendingUserId, String email, String firstName, String lastName, String requestedAccessLevel, boolean approved) {
+    public ApprovalDto(String id, String pendingUserId, String targetUserId, String email, String firstName, String lastName, String requestedAccessLevel, String requestType, java.time.LocalDateTime createdAt, boolean approved) {
         this.id = id;
         this.pendingUserId = pendingUserId;
+        this.targetUserId = targetUserId;
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
         this.requestedAccessLevel = requestedAccessLevel;
+        this.requestType = requestType;
+        this.createdAt = createdAt;
         this.approved = approved;
     }
 
@@ -35,6 +41,14 @@ public class ApprovalDto {
 
     public void setPendingUserId(String pendingUserId) {
         this.pendingUserId = pendingUserId;
+    }
+
+    public String getTargetUserId() {
+        return targetUserId;
+    }
+
+    public void setTargetUserId(String targetUserId) {
+        this.targetUserId = targetUserId;
     }
 
     public String getEmail() {
@@ -69,6 +83,22 @@ public class ApprovalDto {
         this.requestedAccessLevel = requestedAccessLevel;
     }
 
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public boolean isApproved() {
         return approved;
     }
@@ -84,10 +114,13 @@ public class ApprovalDto {
     public static class ApprovalDtoBuilder {
         private String id;
         private String pendingUserId;
+        private String targetUserId;
         private String email;
         private String firstName;
         private String lastName;
         private String requestedAccessLevel;
+        private String requestType;
+        private java.time.LocalDateTime createdAt;
         private boolean approved;
 
         public ApprovalDtoBuilder id(String id) {
@@ -97,6 +130,11 @@ public class ApprovalDto {
 
         public ApprovalDtoBuilder pendingUserId(String pendingUserId) {
             this.pendingUserId = pendingUserId;
+            return this;
+        }
+
+        public ApprovalDtoBuilder targetUserId(String targetUserId) {
+            this.targetUserId = targetUserId;
             return this;
         }
 
@@ -120,13 +158,23 @@ public class ApprovalDto {
             return this;
         }
 
+        public ApprovalDtoBuilder requestType(String requestType) {
+            this.requestType = requestType;
+            return this;
+        }
+
+        public ApprovalDtoBuilder createdAt(java.time.LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
         public ApprovalDtoBuilder approved(boolean approved) {
             this.approved = approved;
             return this;
         }
 
         public ApprovalDto build() {
-            return new ApprovalDto(id, pendingUserId, email, firstName, lastName, requestedAccessLevel, approved);
+            return new ApprovalDto(id, pendingUserId, targetUserId, email, firstName, lastName, requestedAccessLevel, requestType, createdAt, approved);
         }
     }
 }

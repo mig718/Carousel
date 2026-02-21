@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface ApprovalRequestRepository extends MongoRepository<ApprovalRequest, String> {
     Optional<ApprovalRequest> findByPendingUserId(String pendingUserId);
+    Optional<ApprovalRequest> findByTargetUserIdAndApprovedFalse(String targetUserId);
     List<ApprovalRequest> findByApprovedFalse();
 }
 
