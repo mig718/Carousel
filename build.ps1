@@ -93,7 +93,7 @@ if ($buildFrontend) {
     Write-ColorOutput "Cyan" "`nBuilding Frontend..."
     try {
         Push-Location -Path ".\frontend"
-        npm install
+        npm install --legacy-peer-deps
         npm run build
         if ($LASTEXITCODE -ne 0) {
             throw "Frontend build failed"
