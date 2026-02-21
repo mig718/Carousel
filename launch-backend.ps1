@@ -385,63 +385,32 @@ $overallStartupStartTime = Get-Date
 $startedProcesses = @()
 $serviceStatus = @()
 
-$services = @(
-    [PSCustomObject]@{
-        Name = "auth-service"
-        Short = "auth"
-        Aliases = @("auth-service")
-        Version = $BackendVersion
-        Dir = ".\backend\auth-service"
-        JarPath = ".\backend\auth-service\target\auth-service-1.0.0.jar"
-        Port = $AuthServicePort
-        ReadinessUrl = "http://localhost:$AuthServicePort/api/auth/health"
-        ExtraArgs = @("-D'spring.jmx.enabled'='false'", "-D'spring-boot.run.arguments'='--spring.profiles.active=local'")
-    },
-    [PSCustomObject]@{
-        Name = "user-service"
-        Short = "user"
-        Aliases = @("user-service")
-        Version = $BackendVersion
-        Dir = ".\backend\user-service"
-        JarPath = ".\backend\user-service\target\user-service-1.0.0.jar"
-        Port = $UserServicePort
-        ReadinessUrl = "http://localhost:$UserServicePort/api/users/health"
-        ExtraArgs = @("-Dspring.jmx.enabled=false", "-Dspring-boot.run.arguments=--spring.profiles.active=local")
-    },
-    [PSCustomObject]@{
-        Name = "approval-service"
-        Short = "approve"
-        Aliases = @("approval", "approval-service")
-        Version = $BackendVersion
-        Dir = ".\backend\approval-service"
-        JarPath = ".\backend\approval-service\target\approval-service-1.0.0.jar"
-        Port = $ApprovalServicePort
-        ReadinessUrl = "http://localhost:$ApprovalServicePort/api/approvals/health"
-        ExtraArgs = @("-Dspring.jmx.enabled=false", "-Dspring-boot.run.arguments=--spring.profiles.active=local")
-    },
-    [PSCustomObject]@{
-        Name = "api-gateway"
-        Short = "gateway"
-        Aliases = @("api-gateway", "api")
-        Version = $BackendVersion
-        Dir = ".\backend\api-gateway"
-        JarPath = ".\backend\api-gateway\target\api-gateway-1.0.0.jar"
-        Port = $ApiGatewayPort
-        ReadinessUrl = "http://localhost:$ApiGatewayPort/health"
-        ExtraArgs = @("-Dspring.jmx.enabled=false", "-Dspring-boot.run.arguments=--spring.profiles.active=local")
-    }
-)
-
 $healthServiceResult = $null
 
+# Build services array from ServiceMap
+$services = @()
+$allServices = Get-AllServiceShortcuts $ServiceMap
+foreach ($shortcut in $allServices) {
+    $svc = Get-ServiceByShortcut $ServiceMap $shortcut
+    if ($svc) {
+        $services += [PSCustomObject]@{
+            Name = $svc.Name
+            Version = $BackendVersion
+            Dir = $svc.Path
+            JarPath = ".\$($svc.Path)\target\$($svc.Name)-$BackendVersion.jar"
+            Port = $svc.Port
+            ReadinessUrl = $svc.HealthUrl
+            ExtraArgs = @("-Dspring.jmx.enabled=false", "-Dspring-boot.run.arguments=--spring.profiles.active=local")
+        }
+    }
+}
 
 # If -Service is specified, only start the matching service
 if ($Service) {
     $selectedService = Get-ServiceByShortcut $ServiceMap $Service
     if (-not $selectedService) {
         Write-ColorOutput "Red" "[-] Unknown service: $Service."
-        $shortcuts = Get-AllServiceShortcuts $ServiceMap
-        Write-ColorOutput "Yellow" "Valid values: $($shortcuts -join ', ')"
+        Write-ColorOutput "Yellow" "Valid values: $($allServices -join ', ')"
         exit 1
     }
     
@@ -485,7 +454,10 @@ foreach ($serviceDef in $services) {
 
 $overallStartupSeconds = [Math]::Round((New-TimeSpan -Start $overallStartupStartTime -End (Get-Date)).TotalSeconds, 2)
 
-$swaggerUrl = "http://localhost:$ApiGatewayPort/swagger-ui.html"
+# Get gateway port for Swagger URL
+$gatewayService = Get-ServiceByShortcut $ServiceMap "gateway"
+$gatewayPort = if ($gatewayService) { $gatewayService.Port } else { 8000 }
+$swaggerUrl = "http://localhost:$gatewayPort/swagger-ui.html"
 
 # Display startup summary
 Write-Host ""

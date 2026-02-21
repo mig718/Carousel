@@ -41,12 +41,15 @@ function Get-ServiceMap {
         }
 
         $shortcut = $parts[0].Trim()
+        # Health URL may contain colons (e.g., http://localhost:8001/...), so join remaining parts
+        $healthUrl = ($parts[4..($parts.Count - 1)] -join ":").Trim()
+        
         $services[$shortcut] = @{
             Shortcut    = $shortcut
             Name        = $parts[1].Trim()
             Path        = $parts[2].Trim()
             Port        = [int]$parts[3].Trim()
-            HealthUrl   = $parts[4].Trim()
+            HealthUrl   = $healthUrl
         }
     }
 

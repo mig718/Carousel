@@ -24,13 +24,19 @@ export const loginAsync = createAsyncThunk(
   'auth/login',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
+      console.log('Login attempt:', { email, apiUrl: process.env.REACT_APP_API_URL });
       const response = await authService.login({ email, password });
+      console.log('Login successful:', response);
       localStorage.setItem('token', response.token);
       localStorage.setItem('userId', response.userId);
       localStorage.setItem('email', response.email);
       return response;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      return rejectWithValue(errorMessage);
     }
   }
 );
