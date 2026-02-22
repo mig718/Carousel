@@ -30,7 +30,7 @@ const ApprovalsPage: React.FC = () => {
 
   return (
     <div className="approvals-container">
-      <h1>Pending User Approvals</h1>
+      <h2>Pending User Approvals</h2>
 
       {error && <div className="error-message">{error}</div>}
       {message && <div className="success-message">{message}</div>}

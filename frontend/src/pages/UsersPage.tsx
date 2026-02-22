@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { roleService, userService } from '../services/userService';
 import { User } from '../types';
 import './UsersPage.css';
@@ -87,10 +87,6 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="users-container">
-      <div className="users-header">
-        <h1>Users</h1>
-        <Link to="/dashboard" className="back-link">Back to Dashboard</Link>
-      </div>
 
       {error && <div className="error-message">{error}</div>}
       {message && <div className="success-message">{message}</div>}

@@ -12,6 +12,7 @@ import ApprovalsPage from './pages/ApprovalsPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
 import RolesPage from './pages/RolesPage';
+import ProtectedLayout from './components/ProtectedLayout';
 
 import './App.css';
 
@@ -38,7 +39,9 @@ const App: React.FC = () => {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <ProtectedLayout>
+                <DashboardPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -46,7 +49,9 @@ const App: React.FC = () => {
           path="/approvals"
           element={
             <ProtectedRoute>
-              <ApprovalsPage />
+              <ProtectedLayout>
+                <ApprovalsPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -54,7 +59,9 @@ const App: React.FC = () => {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ProfilePage />
+              <ProtectedLayout>
+                <ProfilePage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -62,7 +69,9 @@ const App: React.FC = () => {
           path="/users"
           element={
             <ProtectedRoute>
-              <UsersPage />
+              <ProtectedLayout>
+                <UsersPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -70,7 +79,9 @@ const App: React.FC = () => {
           path="/roles"
           element={
             <ProtectedRoute>
-              <RolesPage />
+              <ProtectedLayout>
+                <RolesPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />

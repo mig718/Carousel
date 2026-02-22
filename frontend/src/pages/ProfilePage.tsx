@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { setUser } from '../redux/authSlice';
 import { AppDispatch } from '../redux/store';
 import { userService } from '../services/userService';
@@ -66,8 +65,7 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="profile-container">
       <div className="profile-header">
-        <h1>My Profile</h1>
-        <Link to="/dashboard" className="back-link">Back to Dashboard</Link>
+        <h2>Profile</h2>
       </div>
 
       {error && <div className="error-message">{error}</div>}
