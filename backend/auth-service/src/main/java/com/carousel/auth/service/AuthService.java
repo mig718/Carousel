@@ -18,6 +18,7 @@ import java.util.Optional;
 @Service
 public class AuthService {
     private final CredentialRepository credentialRepository;
+    private final SessionService sessionService;
 
     @Value("${jwt.secret:carousel-secret-key-for-jwt-token-generation-and-validation}")
     private String jwtSecret;
@@ -25,8 +26,9 @@ public class AuthService {
     @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
-    public AuthService(CredentialRepository credentialRepository) {
+    public AuthService(CredentialRepository credentialRepository, SessionService sessionService) {
         this.credentialRepository = credentialRepository;
+        this.sessionService = sessionService;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -42,8 +44,14 @@ public class AuthService {
         }
 
         String token = generateToken(credential.get().getEmail(), credential.get().getId());
+        String sessionToken = sessionService.generateSessionToken(
+            credential.get().getEmail(),
+            credential.get().getId(),
+            token
+        );
         return LoginResponse.builder()
                 .token(token)
+            .sessionToken(sessionToken)
                 .userId(credential.get().getId())
                 .email(credential.get().getEmail())
                 .build();

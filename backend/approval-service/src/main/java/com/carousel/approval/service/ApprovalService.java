@@ -3,6 +3,7 @@ package com.carousel.approval.service;
 import com.carousel.approval.client.UserServiceClient;
 import com.carousel.approval.domain.ApprovalRequest;
 import com.carousel.approval.dto.ApprovalDto;
+import com.carousel.approval.dto.UserDto;
 import com.carousel.approval.repository.ApprovalRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,13 +29,22 @@ public class ApprovalService {
     private JavaMailSender mailSender;
 
     public void createApprovalRequest(String pendingUserId, String email, String firstName, 
-                                     String lastName, String requestedAccessLevel) {
+                                     String lastName, String requestedAccessLevel, String targetUserId, String requestType) {
+        if (targetUserId != null && !targetUserId.isBlank()) {
+            Optional<ApprovalRequest> existing = approvalRequestRepository.findByTargetUserIdAndApprovedFalse(targetUserId);
+            if (existing.isPresent()) {
+                throw new RuntimeException("An access-level upgrade request is already pending for this user");
+            }
+        }
+
         ApprovalRequest approval = ApprovalRequest.builder()
                 .pendingUserId(pendingUserId)
+                .targetUserId(targetUserId)
                 .email(email)
                 .firstName(firstName)
                 .lastName(lastName)
                 .requestedAccessLevel(requestedAccessLevel)
+                .requestType((requestType == null || requestType.isBlank()) ? "NEW_USER" : requestType)
                 .approved(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -52,12 +63,27 @@ public class ApprovalService {
         ApprovalRequest approval = approvalRequestRepository.findById(approvalId)
                 .orElseThrow(() -> new RuntimeException("Approval request not found"));
 
+        UserDto approver = userServiceClient.getUserByEmail(approverEmail);
+        if (approver == null || approver.getAccessLevel() == null) {
+            throw new RuntimeException("Approver not found");
+        }
+
+        int approverLevel = toLevel(approver.getAccessLevel());
+        int requestedLevel = toLevel(approval.getRequestedAccessLevel());
+        if (approverLevel < requestedLevel) {
+            throw new RuntimeException("Approver access level must be same or higher than requested access level");
+        }
+
         approval.setApproved(true);
         approval.setApprovedBy(approverEmail);
         approval.setApprovedAt(LocalDateTime.now());
         approvalRequestRepository.save(approval);
 
-        // Call user service to promote pending user to full user
+        if ("ACCESS_UPGRADE".equalsIgnoreCase(approval.getRequestType())) {
+            userServiceClient.updateUserAccessLevel(approval.getTargetUserId(), approval.getRequestedAccessLevel());
+            return;
+        }
+
         userServiceClient.approvePendingUser(approval.getPendingUserId());
     }
 
@@ -92,12 +118,23 @@ public class ApprovalService {
         return ApprovalDto.builder()
                 .id(approval.getId())
                 .pendingUserId(approval.getPendingUserId())
+                .targetUserId(approval.getTargetUserId())
                 .email(approval.getEmail())
                 .firstName(approval.getFirstName())
                 .lastName(approval.getLastName())
                 .requestedAccessLevel(approval.getRequestedAccessLevel())
+                .requestType(approval.getRequestType())
+                .createdAt(approval.getCreatedAt())
                 .approved(approval.isApproved())
                 .build();
+    }
+
+    private int toLevel(String accessLevel) {
+        return switch (accessLevel) {
+            case "User" -> 0;
+            case "Admin" -> 1;
+            default -> throw new RuntimeException("Invalid access level: " + accessLevel);
+        };
     }
 }
 

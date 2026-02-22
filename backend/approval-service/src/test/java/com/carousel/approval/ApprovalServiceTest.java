@@ -33,7 +33,9 @@ public class ApprovalServiceTest {
                 "jane@example.com",
                 "Jane",
                 "Doe",
-                "ReadWrite"
+            "ReadWrite",
+            null,
+            "NEW_USER"
         );
 
         var pending = approvalRequestRepository.findByPendingUserId("pending-user-1");
@@ -49,7 +51,9 @@ public class ApprovalServiceTest {
                 "jane@example.com",
                 "Jane",
                 "Doe",
-                "ReadWrite"
+            "ReadWrite",
+            null,
+            "NEW_USER"
         );
         
         approvalService.createApprovalRequest(
@@ -57,7 +61,9 @@ public class ApprovalServiceTest {
                 "bob@example.com",
                 "Bob",
                 "Smith",
-                "Admin"
+            "Admin",
+            null,
+            "NEW_USER"
         );
 
         var pending = approvalService.getPendingApprovals();

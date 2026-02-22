@@ -1,14 +1,49 @@
-﻿import React from 'react';
+﻿import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../redux/authSlice';
+import { logout, setUser } from '../redux/authSlice';
 import { AppDispatch } from '../redux/store';
+import { roleService, userService } from '../services/userService';
 import './DashboardPage.css';
 
 const DashboardPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const email = localStorage.getItem('email') || '';
+  const [canManageUsers, setCanManageUsers] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      if (!email) {
+        return;
+      }
+
+      let isCurrentUserAdmin = false;
+
+      try {
+        const currentUser = await userService.getCurrentUser(email);
+        dispatch(setUser(currentUser));
+        isCurrentUserAdmin = currentUser.accessLevel === 'Admin';
+        setIsAdmin(isCurrentUserAdmin);
+        setCanManageUsers(isCurrentUserAdmin);
+      } catch {
+        setCanManageUsers(false);
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const roles = await roleService.getRolesForUser(email);
+        const hasSupportRole = roles.some((role) => role.toLowerCase() === 'support');
+        setCanManageUsers(isCurrentUserAdmin || hasSupportRole);
+      } catch {
+        setCanManageUsers(isCurrentUserAdmin);
+      }
+    };
+
+    loadCurrentUser();
+  }, [dispatch, email]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -17,6 +52,18 @@ const DashboardPage: React.FC = () => {
 
   const handleApprovals = () => {
     navigate('/approvals');
+  };
+
+  const handleProfile = () => {
+    navigate('/profile');
+  };
+
+  const handleUsers = () => {
+    navigate('/users');
+  };
+
+  const handleRoles = () => {
+    navigate('/roles');
   };
 
   return (
@@ -45,16 +92,16 @@ const DashboardPage: React.FC = () => {
           <div className="menu-card">
             <h3>Profile</h3>
             <p>View and manage your profile information</p>
-            <button className="btn-primary" disabled>
-              Coming Soon
+            <button onClick={handleProfile} className="btn-primary">
+              Open Profile
             </button>
           </div>
 
           <div className="menu-card">
             <h3>Users</h3>
-            <p>View system users and their access levels</p>
-            <button className="btn-primary" disabled>
-              Coming Soon
+            <p>View system users and update registration details</p>
+            <button className="btn-primary" disabled={!canManageUsers} onClick={handleUsers}>
+              {canManageUsers ? 'Open Users' : 'Support/Admin only'}
             </button>
           </div>
 
@@ -63,6 +110,14 @@ const DashboardPage: React.FC = () => {
             <p>Configure account and system settings</p>
             <button className="btn-primary" disabled>
               Coming Soon
+            </button>
+          </div>
+
+          <div className="menu-card">
+            <h3>Roles</h3>
+            <p>Create, edit, delete and assign roles</p>
+            <button className="btn-primary" disabled={!isAdmin} onClick={handleRoles}>
+              {isAdmin ? 'Open Roles' : 'Admin only'}
             </button>
           </div>
         </div>

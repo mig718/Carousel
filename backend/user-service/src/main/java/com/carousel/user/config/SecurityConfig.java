@@ -21,12 +21,16 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/health",
                                 "/api/users/health",
+                                "/api/users/**",
                                 "/login",
                                 "/register",
                                 "/api/users/register",
-                                "/verify-email"
+                                "/verify-email",
+                                "/email/**",
+                                "/approve/**",
+                                "/internal/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 

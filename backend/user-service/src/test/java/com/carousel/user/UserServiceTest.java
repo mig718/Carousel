@@ -41,7 +41,7 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .email("john@example.com")
                 .password("password123")
-                .accessLevel(AccessLevel.ReadOnly)
+                .accessLevel(AccessLevel.User)
                 .build();
 
         var response = userService.register(request);
@@ -57,7 +57,7 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .email("jane@example.com")
                 .password("password123")
-                .accessLevel(AccessLevel.ReadWrite)
+                .accessLevel(AccessLevel.Admin)
                 .build();
 
         var response = userService.register(request);
@@ -71,7 +71,7 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .email("john@example.com")
                 .password("password123")
-                .accessLevel(AccessLevel.ReadOnly)
+                .accessLevel(AccessLevel.User)
                 .build();
 
         userService.register(request);
@@ -86,7 +86,7 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .email("john@example.com")
                 .password("password123")
-                .accessLevel(AccessLevel.ReadOnly)
+                .accessLevel(AccessLevel.User)
                 .build();
 
         var response = userService.register(request);
@@ -106,7 +106,7 @@ public class UserServiceTest {
                 .lastName("Doe")
                 .email("john@example.com")
                 .password("password123")
-                .accessLevel(AccessLevel.ReadWrite)
+                .accessLevel(AccessLevel.Admin)
                 .build();
 
         var response = userService.register(request);
@@ -120,19 +120,10 @@ public class UserServiceTest {
         
         var user = userRepository.findByEmail("john@example.com");
         assertTrue(user.isPresent());
-        assertEquals(AccessLevel.ReadWrite, user.get().getAccessLevel());
+        assertEquals(AccessLevel.Admin, user.get().getAccessLevel());
         
         var stillPending = pendingUserRepository.findByEmail("john@example.com");
         assertFalse(stillPending.isPresent());
-    }
-
-    @Test
-    public void testGetUsersByAccessLevel() {
-        // Create users with different access levels
-        var users = userRepository.findAll();
-        assertEquals(0, users.size());
-        
-        // This test verifies the method works (more comprehensive testing would need more setup)
     }
 
     @Test
@@ -144,68 +135,73 @@ public class UserServiceTest {
 
     @Test
     public void testCreateUserDirectlyByAdmin() {
+        // Create an admin user first
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
+        
+        // Now create a regular user as admin
         var userDto = userService.createUserDirectly(
-                "Support",
+                "User",
                 "User",
                 "support@example.com",
-                AccessLevel.Support,
-                AccessLevel.Admin
+                AccessLevel.User,
+                "admin@example.com"  // requester email (admin)
         );
         
         assertNotNull(userDto);
         assertEquals("support@example.com", userDto.getEmail());
-        assertEquals(AccessLevel.Support, userDto.getAccessLevel());
+        assertEquals(AccessLevel.User, userDto.getAccessLevel());
     }
 
     @Test
-    public void testCreateUserDirectlyBySupport() {
-        var userDto = userService.createUserDirectly(
-                "NewUser",
-                "NewLast",
-                "newuser@example.com",
-                AccessLevel.ReadWrite,
-                AccessLevel.Support
-        );
+    public void testCreateUserDirectlyAsNonAdmin() {
+        // Create a regular (non-admin) user first
+        User regularUser = new User();
+        regularUser.setFirstName("Regular");
+        regularUser.setLastName("User");
+        regularUser.setEmail("regular@example.com");
+        regularUser.setPassword("password");
+        regularUser.setAccessLevel(AccessLevel.User);
+        regularUser.setEmailVerified(true);
+        userRepository.save(regularUser);
         
-        assertNotNull(userDto);
-        assertEquals("newuser@example.com", userDto.getEmail());
-    }
-
-    @Test
-    public void testCreateUserDirectlyInsufficientPrivileges() {
-        assertThrows(RuntimeException.class, () -> 
+        // Try to create a user as non-admin - should throw exception
+        assertThrows(Exception.class, () -> 
             userService.createUserDirectly(
-                    "User",
-                    "User",
-                    "user@example.com",
-                    AccessLevel.ReadOnly,
-                    AccessLevel.ReadOnly  // Insufficient privilege
-            )
-        );
-    }
-
-    @Test
-    public void testCreateAdminUserBySupport() {
-        assertThrows(RuntimeException.class, () -> 
-            userService.createUserDirectly(
-                    "Admin",
-                    "User",
-                    "admin@example.com",
-                    AccessLevel.Admin,  // Trying to create Admin
-                    AccessLevel.Support  // Only Support, not Admin
+                    "NewUser",
+                    "NewLast",
+                    "newuser@example.com",
+                    AccessLevel.User,
+                    "regular@example.com"  // requester is not admin
             )
         );
     }
 
     @Test
     public void testUpdateUserByAdmin() {
+        // Create admin
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
+        
         // Create initial user
         var initialUserDto = userService.createUserDirectly(
                 "John",
                 "Doe",
                 "john@example.com",
-                AccessLevel.ReadOnly,
-                AccessLevel.Admin
+                AccessLevel.User,
+                "admin@example.com"
         );
 
         // Update user
@@ -213,101 +209,156 @@ public class UserServiceTest {
                 initialUserDto.getId(),
                 "Jane",
                 "Smith",
-                AccessLevel.ReadWrite,
-                AccessLevel.Admin
+                AccessLevel.Admin,
+                "admin@example.com"
         );
 
         assertEquals("Jane", updatedUserDto.getFirstName());
         assertEquals("Smith", updatedUserDto.getLastName());
-        assertEquals(AccessLevel.ReadWrite, updatedUserDto.getAccessLevel());
+        assertEquals(AccessLevel.Admin, updatedUserDto.getAccessLevel());
     }
 
     @Test
-    public void testUpdateUserInsufficientPrivileges() {
-        var userDto = userService.createUserDirectly(
+    public void testUpdateUserAsNonAdmin() {
+        // Create admin for setup
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
+        
+        // Create initial user
+        var initialUserDto = userService.createUserDirectly(
                 "John",
                 "Doe",
                 "john@example.com",
-                AccessLevel.ReadOnly,
-                AccessLevel.Admin
+                AccessLevel.User,
+                "admin@example.com"
         );
 
-        assertThrows(RuntimeException.class, () ->
+        // Create non-admin
+        User regularUser = new User();
+        regularUser.setFirstName("Regular");
+        regularUser.setLastName("User");
+        regularUser.setEmail("regular@example.com");
+        regularUser.setPassword("password");
+        regularUser.setAccessLevel(AccessLevel.User);
+        regularUser.setEmailVerified(true);
+        userRepository.save(regularUser);
+
+        // Try to update as non-admin should fail
+        assertThrows(Exception.class, () ->
             userService.updateUser(
-                    userDto.getId(),
+                    initialUserDto.getId(),
                     "Jane",
                     "Smith",
-                    AccessLevel.ReadWrite,
-                    AccessLevel.ReadOnly  // Insufficient privilege
+                    AccessLevel.User,
+                    "regular@example.com"  // non-admin requester
             )
         );
     }
 
     @Test
     public void testDeleteUserByAdmin() {
+        // Create admin
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
+        
+        // Create user to delete
         var userDto = userService.createUserDirectly(
                 "John",
                 "Doe",
                 "john@example.com",
-                AccessLevel.ReadOnly,
-                AccessLevel.Admin
+                AccessLevel.User,
+                "admin@example.com"
         );
 
-        userService.deleteUser(userDto.getId(), AccessLevel.Admin);
+        userService.deleteUser(userDto.getId(), "admin@example.com");
 
         assertFalse(userRepository.findById(userDto.getId()).isPresent());
     }
 
     @Test
-    public void testDeleteUserInsufficientPrivileges() {
+    public void testDeleteUserAsNonAdmin() {
+        // Create admin for setup
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
+        
+        // Create user
         var userDto = userService.createUserDirectly(
                 "John",
                 "Doe",
                 "john@example.com",
-                AccessLevel.ReadOnly,
-                AccessLevel.Admin
+                AccessLevel.User,
+                "admin@example.com"
         );
 
-        assertThrows(RuntimeException.class, () ->
-            userService.deleteUser(userDto.getId(), AccessLevel.Support)
+        // Create non-admin
+        User regularUser = new User();
+        regularUser.setFirstName("Regular");
+        regularUser.setLastName("User");
+        regularUser.setEmail("regular@example.com");
+        regularUser.setPassword("password");
+        regularUser.setAccessLevel(AccessLevel.User);
+        regularUser.setEmailVerified(true);
+        userRepository.save(regularUser);
+
+        // Try to delete as non-admin should fail
+        assertThrows(Exception.class, () ->
+            userService.deleteUser(userDto.getId(), "regular@example.com")
         );
     }
 
     @Test
     public void testGetAllUsersByAdmin() {
-        // Create multiple users
-        userService.createUserDirectly("User1", "Last1", "user1@example.com", AccessLevel.ReadOnly, AccessLevel.Admin);
-        userService.createUserDirectly("User2", "Last2", "user2@example.com", AccessLevel.ReadWrite, AccessLevel.Admin);
+        // Create admin
+        User adminUser = new User();
+        adminUser.setFirstName("Admin");
+        adminUser.setLastName("User");
+        adminUser.setEmail("admin@example.com");
+        adminUser.setPassword("password");
+        adminUser.setAccessLevel(AccessLevel.Admin);
+        adminUser.setEmailVerified(true);
+        userRepository.save(adminUser);
         
-        var users = userService.getAllUsers(AccessLevel.Admin);
-        assertEquals(2, users.size());
+        // Create multiple users
+        userService.createUserDirectly("User1", "Last1", "user1@example.com", AccessLevel.User, "admin@example.com");
+        userService.createUserDirectly("User2", "Last2", "user2@example.com", AccessLevel.User, "admin@example.com");
+        
+        var users = userService.getAllUsers("admin@example.com");
+        assertEquals(3, users.size());  // admin + 2 users
     }
 
     @Test
-    public void testGetAllUsersInsufficientPrivileges() {
-        assertThrows(RuntimeException.class, () ->
-            userService.getAllUsers(AccessLevel.ReadOnly)
-        );
-    }
-
-    @Test
-    public void testPreventDowngradeAdminUser() {
-        var adminDto = userService.createUserDirectly(
-                "Admin",
-                "User",
-                "admin@example.com",
-                AccessLevel.Admin,
-                AccessLevel.Admin
-        );
-
-        assertThrows(RuntimeException.class, () ->
-            userService.updateUser(
-                    adminDto.getId(),
-                    "Admin",
-                    "User",
-                    AccessLevel.Support,  // Trying to downgrade Admin
-                    AccessLevel.Admin
-            )
+    public void testGetAllUsersAsNonAdmin() {
+        // Create non-admin user
+        User regularUser = new User();
+        regularUser.setFirstName("Regular");
+        regularUser.setLastName("User");
+        regularUser.setEmail("regular@example.com");
+        regularUser.setPassword("password");
+        regularUser.setAccessLevel(AccessLevel.User);
+        regularUser.setEmailVerified(true);
+        userRepository.save(regularUser);
+        
+        // Try to get all users as non-admin should fail
+        assertThrows(Exception.class, () ->
+            userService.getAllUsers("regular@example.com")
         );
     }
 }

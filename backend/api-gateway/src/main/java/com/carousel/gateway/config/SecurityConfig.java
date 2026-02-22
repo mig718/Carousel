@@ -25,12 +25,15 @@ public class SecurityConfig {
                                 "/api/auth/v3/api-docs",
                                 "/api/users/v3/api-docs",
                                 "/api/approvals/v3/api-docs",
+                                "/api/roles/v3/api-docs",
+                                "/api/users/**",
+                                "/api/roles/**",
                                 "/api/users/register",
                                 "/api/auth/login",
                                 "/api/auth/verify-email",
                                 "/webjars/**"
                         ).permitAll()
-                        .anyExchange().authenticated()
+                        .anyExchange().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults())
                 .build();

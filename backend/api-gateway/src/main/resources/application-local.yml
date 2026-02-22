@@ -14,8 +14,12 @@ spring:
           uri: http://localhost:8003
           predicates:
             - Path=/api/approvals/**
-        - id: health-service
+        - id: role-service
           uri: http://localhost:8004
+          predicates:
+            - Path=/api/roles/**
+        - id: health-service
+          uri: http://localhost:8005
           predicates:
             - Path=/api/health/**
 

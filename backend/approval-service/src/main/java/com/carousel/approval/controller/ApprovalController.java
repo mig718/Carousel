@@ -28,7 +28,9 @@ public class ApprovalController {
                 request.getEmail(),
                 request.getFirstName(),
                 request.getLastName(),
-                request.getRequestedAccessLevel()
+                request.getRequestedAccessLevel(),
+                request.getTargetUserId(),
+                request.getRequestType()
         );
         return ResponseEntity.ok("Approval request created and notifications sent");
     }

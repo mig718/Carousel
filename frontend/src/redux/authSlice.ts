@@ -28,6 +28,7 @@ export const loginAsync = createAsyncThunk(
       const response = await authService.login({ email, password });
       console.log('Login successful:', response);
       localStorage.setItem('token', response.token);
+      localStorage.setItem('sessionToken', response.sessionToken);
       localStorage.setItem('userId', response.userId);
       localStorage.setItem('email', response.email);
       return response;
@@ -51,6 +52,7 @@ const authSlice = createSlice({
       state.token = null;
       state.email = null;
       localStorage.removeItem('token');
+      localStorage.removeItem('sessionToken');
       localStorage.removeItem('userId');
       localStorage.removeItem('email');
       localStorage.removeItem('user');

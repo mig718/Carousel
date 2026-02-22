@@ -6,7 +6,11 @@ import {
   RegisterResponse,
   PendingUser,
   ApprovalRequest,
-  User
+  User,
+  AccessLevel,
+  UpdateOwnProfileRequest,
+  Role,
+  RoleAssignmentRequest
 } from '../types';
 
 export const authService = {
@@ -46,24 +50,45 @@ export const userService = {
     return response.data;
   },
 
-  getUsersByAccessLevel: async (accessLevel: string): Promise<User[]> => {
-    const response = await apiClient.get<User[]>(`/users/access-level/${accessLevel}`);
+  getVerifiedPendingUsers: async (): Promise<PendingUser[]> => {
+    const response = await apiClient.get<PendingUser[]>('/users/pending/verified');
     return response.data;
   },
 
-  getVerifiedPendingUsers: async (): Promise<PendingUser[]> => {
-    const response = await apiClient.get<PendingUser[]>('/users/pending/verified');
+  getCurrentUser: async (email: string): Promise<User> => {
+    const response = await apiClient.get<User>('/users/me', { params: { email } });
+    return response.data;
+  },
+
+  updateCurrentUser: async (email: string, data: UpdateOwnProfileRequest): Promise<User> => {
+    const response = await apiClient.put<User>('/users/me', data, { params: { email } });
+    return response.data;
+  },
+
+  getAllUsers: async (requesterEmail: string): Promise<User[]> => {
+    const response = await apiClient.get<User[]>('/users/admin/all', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateUserAdmin: async (
+    userId: string,
+    requesterEmail: string,
+    data: { firstName: string; lastName: string; accessLevel: AccessLevel }
+  ): Promise<User> => {
+    const response = await apiClient.put<User>(`/users/admin/${userId}`, data, { params: { requesterEmail } });
     return response.data;
   },
 };
 
 export const approvalService = {
   createApprovalRequest: async (data: {
-    pendingUserId: string;
+    pendingUserId?: string;
+    targetUserId?: string;
     email: string;
     firstName: string;
     lastName: string;
     requestedAccessLevel: string;
+    requestType?: 'NEW_USER' | 'ACCESS_UPGRADE';
   }): Promise<string> => {
     const response = await apiClient.post<string>('/approvals/request', data);
     return response.data;
@@ -80,6 +105,48 @@ export const approvalService = {
       {},
       { params: { approverEmail } }
     );
+    return response.data;
+  },
+};
+
+export const roleService = {
+  getRoles: async (): Promise<Role[]> => {
+    const response = await apiClient.get<Role[]>('/roles');
+    return response.data;
+  },
+
+  getRolesForUser: async (email: string): Promise<string[]> => {
+    const response = await apiClient.get<string[]>(`/roles/user/${encodeURIComponent(email)}`);
+    return response.data;
+  },
+
+  userHasRole: async (email: string, roleName: string): Promise<boolean> => {
+    const response = await apiClient.get<boolean>(`/roles/user/${encodeURIComponent(email)}/has/${encodeURIComponent(roleName)}`);
+    return response.data;
+  },
+
+  createRole: async (requesterEmail: string, role: Role): Promise<Role> => {
+    const response = await apiClient.post<Role>('/roles', role, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateRole: async (requesterEmail: string, roleName: string, role: Role): Promise<Role> => {
+    const response = await apiClient.put<Role>(`/roles/${encodeURIComponent(roleName)}`, role, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  deleteRole: async (requesterEmail: string, roleName: string): Promise<string> => {
+    const response = await apiClient.delete<string>(`/roles/${encodeURIComponent(roleName)}`, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  assignRole: async (requesterEmail: string, request: RoleAssignmentRequest): Promise<string> => {
+    const response = await apiClient.post<string>('/roles/assign', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  unassignRole: async (requesterEmail: string, request: RoleAssignmentRequest): Promise<string> => {
+    const response = await apiClient.delete<string>('/roles/assign', { data: request, params: { requesterEmail } });
     return response.data;
   },
 };

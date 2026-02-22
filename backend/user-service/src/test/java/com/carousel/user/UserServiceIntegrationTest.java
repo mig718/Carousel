@@ -56,7 +56,7 @@ public class UserServiceIntegrationTest {
         verifiedUser.setFirstName("Verified");
         verifiedUser.setLastName("User");
         verifiedUser.setEmail(TEST_EMAIL_VERIFIED);
-        verifiedUser.setAccessLevel(AccessLevel.ReadWrite);
+        verifiedUser.setAccessLevel(AccessLevel.User);
         verifiedUser.setEmailVerified(true);
         verifiedUser.setCreatedAt(LocalDateTime.now());
         verifiedUser.setUpdatedAt(LocalDateTime.now());
@@ -70,7 +70,7 @@ public class UserServiceIntegrationTest {
                 "\"firstName\": \"Integration\", " +
                 "\"lastName\": \"Test\", " +
                 "\"password\": \"SecureTest@123\", " +
-                "\"accessLevel\": \"ReadOnly\" " +
+                "\"accessLevel\": \"User\" " +
                 "}";
         
         mockMvc.perform(post("/register")
@@ -88,7 +88,7 @@ public class UserServiceIntegrationTest {
                 "\"firstName\": \"Duplicate\", " +
                 "\"lastName\": \"Test\", " +
                 "\"password\": \"SecureTest@123\", " +
-                "\"accessLevel\": \"ReadOnly\" " +
+                "\"accessLevel\": \"User\" " +
                 "}";
         
         mockMvc.perform(post("/register")
@@ -111,13 +111,6 @@ public class UserServiceIntegrationTest {
         mockMvc.perform(get("/invalidId")
             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testGetUsersByAccessLevel() throws Exception {
-        mockMvc.perform(get("/access-level/ReadWrite")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
     }
 
     @Test
@@ -145,7 +138,7 @@ public class UserServiceIntegrationTest {
                 "\"email\": \"newuser@example.com\", " +
                 "\"firstName\": \"New\", " +
                 "\"lastName\": \"User\", " +
-                "\"accessLevel\": \"Support\" " +
+                "\"accessLevel\": \"User\" " +
                 "}";
         
         mockMvc.perform(post("/admin/create")
@@ -154,7 +147,7 @@ public class UserServiceIntegrationTest {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("newuser@example.com"))
-                .andExpect(jsonPath("$.accessLevel").value("Support"));
+                .andExpect(jsonPath("$.accessLevel").value("User"));
     }
 
     @Test
@@ -176,7 +169,7 @@ public class UserServiceIntegrationTest {
         regularUser.setFirstName("Regular");
         regularUser.setLastName("User");
         regularUser.setEmail("regular@example.com");
-        regularUser.setAccessLevel(AccessLevel.ReadOnly);
+        regularUser.setAccessLevel(AccessLevel.User);
         regularUser.setEmailVerified(true);
         regularUser.setCreatedAt(LocalDateTime.now());
         regularUser.setUpdatedAt(LocalDateTime.now());
@@ -185,7 +178,7 @@ public class UserServiceIntegrationTest {
         String updateRequest = "{ " +
                 "\"firstName\": \"Updated\", " +
                 "\"lastName\": \"User\", " +
-                "\"accessLevel\": \"ReadWrite\" " +
+                "\"accessLevel\": \"Admin\" " +
                 "}";
         
         mockMvc.perform(put("/admin/" + regularUser.getId())
@@ -194,7 +187,7 @@ public class UserServiceIntegrationTest {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Updated"))
-                .andExpect(jsonPath("$.accessLevel").value("ReadWrite"));
+                .andExpect(jsonPath("$.accessLevel").value("Admin"));
     }
 
     @Test
@@ -216,7 +209,7 @@ public class UserServiceIntegrationTest {
         regularUser.setFirstName("Regular");
         regularUser.setLastName("User");
         regularUser.setEmail("regular@example.com");
-        regularUser.setAccessLevel(AccessLevel.ReadOnly);
+        regularUser.setAccessLevel(AccessLevel.User);
         regularUser.setEmailVerified(true);
         regularUser.setCreatedAt(LocalDateTime.now());
         regularUser.setUpdatedAt(LocalDateTime.now());
@@ -252,28 +245,28 @@ public class UserServiceIntegrationTest {
     }
 
     @Test
-    public void testCreateAdminUserBySupport() throws Exception {
-        // Create support user
-        User supportUser = new User();
-        supportUser.setFirstName("Support");
-        supportUser.setLastName("User");
-        supportUser.setEmail("support@example.com");
-        supportUser.setPassword("supportpass");
-        supportUser.setAccessLevel(AccessLevel.Support);
-        supportUser.setEmailVerified(true);
-        supportUser.setCreatedAt(LocalDateTime.now());
-        supportUser.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(supportUser);
-        String token = loginAndGetToken("support@example.com", "supportpass");
+    public void testCreateUserAsNonAdmin() throws Exception {
+        // Create non-admin user
+        User regularUser = new User();
+        regularUser.setFirstName("Regular");
+        regularUser.setLastName("User");
+        regularUser.setEmail("regular@example.com");
+        regularUser.setPassword("regularpass");
+        regularUser.setAccessLevel(AccessLevel.User);
+        regularUser.setEmailVerified(true);
+        regularUser.setCreatedAt(LocalDateTime.now());
+        regularUser.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(regularUser);
+        String token = loginAndGetToken("regular@example.com", "regularpass");
 
         String createRequest = "{ " +
                 "\"email\": \"newadmin@example.com\", " +
-                "\"firstName\": \"Admin\", " +
+                "\"firstName\": \"NewAdmin\", " +
                 "\"lastName\": \"User\", " +
                 "\"accessLevel\": \"Admin\" " +
                 "}";
         
-        // Support user should not be able to create Admin users
+        // Non-admin user should not be able to create users
         mockMvc.perform(post("/admin/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest)

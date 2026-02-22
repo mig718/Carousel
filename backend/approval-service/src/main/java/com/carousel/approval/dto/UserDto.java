@@ -5,14 +5,16 @@ public class UserDto {
     private String firstName;
     private String lastName;
     private String email;
+    private String accessLevel;
 
     public UserDto() {}
 
-    public UserDto(String id, String firstName, String lastName, String email) {
+    public UserDto(String id, String firstName, String lastName, String email, String accessLevel) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.accessLevel = accessLevel;
     }
 
     public String getId() {
@@ -47,6 +49,14 @@ public class UserDto {
         this.email = email;
     }
 
+    public String getAccessLevel() {
+        return accessLevel;
+    }
+
+    public void setAccessLevel(String accessLevel) {
+        this.accessLevel = accessLevel;
+    }
+
     public static UserDtoBuilder builder() {
         return new UserDtoBuilder();
     }
@@ -56,6 +66,7 @@ public class UserDto {
         private String firstName;
         private String lastName;
         private String email;
+        private String accessLevel;
 
         public UserDtoBuilder id(String id) {
             this.id = id;
@@ -77,8 +88,13 @@ public class UserDto {
             return this;
         }
 
+        public UserDtoBuilder accessLevel(String accessLevel) {
+            this.accessLevel = accessLevel;
+            return this;
+        }
+
         public UserDto build() {
-            return new UserDto(id, firstName, lastName, email);
+            return new UserDto(id, firstName, lastName, email, accessLevel);
         }
     }
 }

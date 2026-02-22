@@ -33,6 +33,10 @@ spring:
           uri: lb://approval-service
           predicates:
             - Path=/api/approvals/**
+        - id: role-service
+          uri: lb://role-service
+          predicates:
+            - Path=/api/roles/**
 
 server:
   port: 8000
@@ -47,6 +51,8 @@ springdoc:
         url: /api/users/v3/api-docs
       - name: Approval Service
         url: /api/approvals/v3/api-docs
+      - name: Role Service
+        url: /api/roles/v3/api-docs
     urlsPrimaryName: Auth Service
 
 management:

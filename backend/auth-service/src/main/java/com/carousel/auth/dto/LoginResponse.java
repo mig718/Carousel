@@ -2,14 +2,16 @@ package com.carousel.auth.dto;
 
 public class LoginResponse {
     private String token;
+    private String sessionToken;
     private String userId;
     private String email;
 
     public LoginResponse() {
     }
 
-    public LoginResponse(String token, String userId, String email) {
+    public LoginResponse(String token, String sessionToken, String userId, String email) {
         this.token = token;
+        this.sessionToken = sessionToken;
         this.userId = userId;
         this.email = email;
     }
@@ -20,6 +22,14 @@ public class LoginResponse {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getSessionToken() {
+        return sessionToken;
+    }
+
+    public void setSessionToken(String sessionToken) {
+        this.sessionToken = sessionToken;
     }
 
     public String getUserId() {
@@ -44,11 +54,17 @@ public class LoginResponse {
 
     public static class LoginResponseBuilder {
         private String token;
+        private String sessionToken;
         private String userId;
         private String email;
 
         public LoginResponseBuilder token(String token) {
             this.token = token;
+            return this;
+        }
+
+        public LoginResponseBuilder sessionToken(String sessionToken) {
+            this.sessionToken = sessionToken;
             return this;
         }
 
@@ -63,7 +79,7 @@ public class LoginResponse {
         }
 
         public LoginResponse build() {
-            return new LoginResponse(token, userId, email);
+            return new LoginResponse(token, sessionToken, userId, email);
         }
     }
 }

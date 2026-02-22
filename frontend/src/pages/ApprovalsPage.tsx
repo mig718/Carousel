@@ -53,10 +53,10 @@ const ApprovalsPage: React.FC = () => {
                 </h3>
                 <p className="email">{approval.email}</p>
                 <p className="access-level">
-                  Requesting <strong>{approval.requestedAccessLevel}</strong> access
+                  {approval.requestType === 'ACCESS_UPGRADE' ? 'Upgrade to' : 'Requesting'} <strong>{approval.requestedAccessLevel}</strong> access
                 </p>
                 <p className="created-at">
-                  Applied: {new Date(approval.id).toLocaleDateString()}
+                  Applied: {approval.createdAt ? new Date(approval.createdAt).toLocaleDateString() : 'N/A'}
                 </p>
               </div>
               <div className="approval-actions">

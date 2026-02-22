@@ -14,7 +14,7 @@ const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [accessLevel, setAccessLevel] = useState<AccessLevel>(AccessLevel.ReadOnly);
+  const [accessLevel, setAccessLevel] = useState<AccessLevel>(AccessLevel.User);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { loading, error, message } = useSelector((state: RootState) => state.registration);
@@ -35,7 +35,7 @@ const RegisterPage: React.FC = () => {
         accessLevel,
       })).unwrap();
       
-      if (accessLevel === AccessLevel.ReadOnly) {
+      if (accessLevel === AccessLevel.User) {
         navigate('/verify');
       } else {
         navigate('/pending-approval');
@@ -129,20 +129,19 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="accessLevel">Access Level</label>
+            <label htmlFor="accessLevel">Account Type</label>
             <select
               id="accessLevel"
               value={accessLevel}
               onChange={(e) => setAccessLevel(e.target.value as AccessLevel)}
             >
-              <option value={AccessLevel.ReadOnly}>Read Only (No Approval Required)</option>
-              <option value={AccessLevel.ReadWrite}>Read Write (Requires Approval)</option>
+              <option value={AccessLevel.User}>User (No Approval Required)</option>
               <option value={AccessLevel.Admin}>Admin (Requires Approval)</option>
             </select>
             <small className="access-level-info">
-              {accessLevel === AccessLevel.ReadOnly
-                ? 'Read-only access is immediately available after email verification'
-                : 'This access level requires approval from existing users with equal or higher access level'}
+              {accessLevel === AccessLevel.User
+                ? 'User access is immediately available after email verification'
+                : 'Admin access requires approval from an existing Admin'}
             </small>
           </div>
 
