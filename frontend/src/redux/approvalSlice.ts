@@ -20,7 +20,19 @@ export const fetchPendingApprovalsAsync = createAsyncThunk(
   'approval/fetchPendingApprovals',
   async (_, { rejectWithValue }) => {
     try {
-      return await approvalService.getPendingApprovals();
+      // Retry logic for resilience
+      let lastError: any;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          return await approvalService.getPendingApprovals();
+        } catch (error: unknown) {
+          lastError = error;
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, 400));
+          }
+        }
+      }
+      throw lastError;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch approvals');
     }

@@ -13,20 +13,30 @@ const UsersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const canAccess = useMemo(
-    () => roles.some((role) => role.toLowerCase() === 'support'),
-    [roles]
+    () => isAdmin || roles.some((role) => role.toLowerCase() === 'support'),
+    [isAdmin, roles]
   );
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        await userService.getCurrentUser(requesterEmail);
+        const currentUser = await userService.getCurrentUser(requesterEmail);
+        const adminAccess = currentUser.accessLevel === 'Admin';
+        setIsAdmin(adminAccess);
 
-        const userRoles = await roleService.getRolesForUser(requesterEmail);
-        setRoles(userRoles);
-        const hasAccess = userRoles.some((role) => role.toLowerCase() === 'support');
+        let hasSupportRole = false;
+        try {
+          const userRoles = await roleService.getRolesForUser(requesterEmail);
+          setRoles(userRoles);
+          hasSupportRole = userRoles.some((role) => role.toLowerCase() === 'support');
+        } catch {
+          setRoles([]);
+        }
+
+        const hasAccess = adminAccess || hasSupportRole;
         if (!hasAccess) {
           return;
         }

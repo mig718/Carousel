@@ -19,24 +19,51 @@
 
 .users-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .user-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr auto;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr 1.5fr 80px;
+  gap: 12px;
   background: white;
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  align-items: center;
 }
 
 .user-row input,
 .user-row select {
-  padding: 8px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 14px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  padding: 8px 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .error-message {
@@ -53,4 +80,30 @@
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 12px;
+}
+
+.btn-primary {
+  padding: 10px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: max-content;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
 }

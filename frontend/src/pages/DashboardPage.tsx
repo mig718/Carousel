@@ -19,15 +19,26 @@ const DashboardPage: React.FC = () => {
         return;
       }
 
+      let isCurrentUserAdmin = false;
+
       try {
         const currentUser = await userService.getCurrentUser(email);
         dispatch(setUser(currentUser));
-        setIsAdmin(currentUser.accessLevel === 'Admin');
-        const roles = await roleService.getRolesForUser(email);
-        setCanManageUsers(roles.some((role) => role.toLowerCase() === 'support'));
+        isCurrentUserAdmin = currentUser.accessLevel === 'Admin';
+        setIsAdmin(isCurrentUserAdmin);
+        setCanManageUsers(isCurrentUserAdmin);
       } catch {
         setCanManageUsers(false);
         setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const roles = await roleService.getRolesForUser(email);
+        const hasSupportRole = roles.some((role) => role.toLowerCase() === 'support');
+        setCanManageUsers(isCurrentUserAdmin || hasSupportRole);
+      } catch {
+        setCanManageUsers(isCurrentUserAdmin);
       }
     };
 

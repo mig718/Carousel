@@ -25,26 +25,78 @@ const RolesPage: React.FC = () => {
   const isAdmin = currentUser?.accessLevel === 'Admin';
 
   const roleNames = useMemo(() => roles.map((role) => role.name), [roles]);
+  const defaultRoles: Role[] = useMemo(
+    () => [
+      { name: 'Support', description: 'Full access to user management' },
+      { name: 'ReadOnly', description: 'Read-only access' },
+      { name: 'PowerUser', description: 'Elevated access to advanced functionality' },
+    ],
+    []
+  );
+
+  const retry = useCallback(async <T,>(operation: () => Promise<T>, attempts = 3, delayMs = 400): Promise<T> => {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        if (attempt < attempts) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+    throw lastError;
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const [me, allRoles, allUsers] = await Promise.all([
-        userService.getCurrentUser(requesterEmail),
-        roleService.getRoles(),
-        userService.getAllUsers(requesterEmail),
-      ]);
 
+    let me: User;
+    try {
+      me = await userService.getCurrentUser(requesterEmail);
       setCurrentUser(me);
-      setRoles(allRoles);
-      setUsers(allUsers);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load roles data');
+      setCurrentUser(null);
+      return;
     } finally {
       setLoading(false);
     }
-  }, [requesterEmail]);
+
+    if (me.accessLevel !== 'Admin') {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const [rolesResult, usersResult] = await Promise.allSettled([
+        retry(() => roleService.getRoles()),
+        retry(() => userService.getAllUsers(requesterEmail)),
+      ]);
+
+      if (rolesResult.status === 'fulfilled') {
+        setRoles(rolesResult.value);
+      } else {
+        setRoles(defaultRoles);
+      }
+
+      if (usersResult.status === 'fulfilled') {
+        setUsers(usersResult.value);
+      } else {
+        setUsers([me]);
+      }
+
+      setError(null);
+    } catch {
+      setRoles(defaultRoles);
+      setUsers([me]);
+      setError(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [defaultRoles, requesterEmail, retry]);
 
   useEffect(() => {
     if (requesterEmail) {

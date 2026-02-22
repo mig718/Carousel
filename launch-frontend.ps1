@@ -152,7 +152,7 @@ if (Test-Path $stdOut) { Remove-Item $stdOut -Force -ErrorAction SilentlyContinu
 if (Test-Path $stdErr) { Remove-Item $stdErr -Force -ErrorAction SilentlyContinue }
 
 $frontendProcess = Start-Process -FilePath "cmd.exe" `
-    -ArgumentList "/c set BROWSER=none && npm start" `
+    -ArgumentList "/d /s /c ""set ""BROWSER=none"" && set ""BROWSER_ARGS="" && npm start""" `
     -WorkingDirectory ".\frontend" `
     -PassThru `
     -WindowStyle Hidden `

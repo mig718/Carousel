@@ -38,6 +38,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string;
+  sessionToken: string;
   userId: string;
   email: string;
 }

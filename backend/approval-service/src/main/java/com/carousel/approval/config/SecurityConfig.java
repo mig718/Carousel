@@ -19,9 +19,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/health",
-                                "/api/approvals/health"
+                                "/api/approvals/health",
+                                "/api/approvals/**",
+                                "/request",
+                                "/approve/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 

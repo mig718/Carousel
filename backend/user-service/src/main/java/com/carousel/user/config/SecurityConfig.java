@@ -21,6 +21,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/health",
                                 "/api/users/health",
+                                "/api/users/**",
                                 "/login",
                                 "/register",
                                 "/api/users/register",
@@ -29,7 +30,7 @@ public class SecurityConfig {
                                 "/approve/**",
                                 "/internal/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 

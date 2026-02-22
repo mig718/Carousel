@@ -20,9 +20,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/health",
                                 "/api/roles/health",
+                                "/api/roles/**",
                                 "/internal/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
