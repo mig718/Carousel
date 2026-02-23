@@ -15,6 +15,7 @@ import RolesPage from './pages/RolesPage';
 import HomePage from './pages/HomePage';
 import InventoryPage from './pages/InventoryPage';
 import SearchPage from './pages/SearchPage';
+import NotImplementedPage from './pages/NotImplementedPage';
 import AdminDashboard from './pages/AdminDashboard';
 import SettingsDashboard from './pages/SettingsDashboard';
 import SettingsUsersPage from './pages/SettingsUsersPage';
@@ -189,6 +190,16 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <ProtectedLayout>
                 <SearchPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/not-implemented"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <NotImplementedPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }

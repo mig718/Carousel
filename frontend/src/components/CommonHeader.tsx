@@ -39,7 +39,7 @@ const CommonHeader: React.FC = () => {
   return (
     <header className="common-header">
       <button className="logo-container" onClick={() => navigate('/home')}>
-        <img src={`${process.env.PUBLIC_URL}/carousel-logo.png`} alt="Carousel" className="carousel-icon-img" />
+        <img src={`${process.env.PUBLIC_URL}/carousel-logo.svg`} alt="Carousel" className="carousel-icon-img" />
         <h1 className="carousel-title">carousel</h1>
       </button>
 
@@ -51,7 +51,9 @@ const CommonHeader: React.FC = () => {
             className="profile-icon-btn"
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
           >
-            <span className="profile-icon">👤</span>
+            <svg className="profile-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
           </button>
           
           {profileMenuOpen && (

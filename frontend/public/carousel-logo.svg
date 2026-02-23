@@ -13,9 +13,9 @@
       <stop offset="100%" stop-color="#ffe7f1"/>
     </linearGradient>
     <style>
-      .ink { fill: #111111; }
-      .line { fill: none; stroke: #111111; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
-      .line-thin { fill: none; stroke: #111111; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+      .ink { fill: #fffcf0; }
+      .line { fill: none; stroke: #fffcf0; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+      .line-thin { fill: none; stroke: #fffcf0; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
       .paper { fill: #fffdf8; }
     </style>
   </defs>

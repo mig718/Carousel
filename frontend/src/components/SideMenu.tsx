@@ -121,12 +121,6 @@ const SideMenu: React.FC = () => {
         <div className="menu-divider"></div>
 
         <div className="menu-section">
-          {showAdmin && (
-            <NavLink to="/admin" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
-              <span className="menu-icon">{iconAdmin}</span>
-              <span className="menu-text">Admin</span>
-            </NavLink>
-          )}
           {showSettings && (
             <NavLink to="/settings" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
               <span className="menu-icon">{iconSettings}</span>
@@ -140,6 +134,12 @@ const SideMenu: React.FC = () => {
         <div className="menu-divider"></div>
 
         <div className="menu-section menu-bottom">
+          {showAdmin && (
+            <NavLink to="/admin" className={({ isActive }) => `menu-link admin ${isActive ? 'active' : ''}`}>
+              <span className="menu-icon">{iconAdmin}</span>
+              <span className="menu-text">Admin</span>
+            </NavLink>
+          )}
           <button className="menu-exit" onClick={handleExit}>
             <span className="menu-icon">{iconExit}</span>
             <span className="menu-text">Exit</span>
