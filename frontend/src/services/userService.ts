@@ -10,7 +10,11 @@ import {
   AccessLevel,
   UpdateOwnProfileRequest,
   Role,
-  RoleAssignmentRequest
+  RoleAssignmentRequest,
+  ResourceType,
+  ResourceTypeRequest,
+  InventoryItem,
+  InventoryItemRequest
 } from '../types';
 
 export const authService = {
@@ -147,6 +151,48 @@ export const roleService = {
 
   unassignRole: async (requesterEmail: string, request: RoleAssignmentRequest): Promise<string> => {
     const response = await apiClient.delete<string>('/roles/assign', { data: request, params: { requesterEmail } });
+    return response.data;
+  },
+};
+
+export const inventoryService = {
+  getTypes: async (requesterEmail: string): Promise<ResourceType[]> => {
+    const response = await apiClient.get<ResourceType[]>('/inventory/types', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getIcons: async (): Promise<string[]> => {
+    const response = await apiClient.get<string[]>('/inventory/icons');
+    return response.data;
+  },
+
+  createType: async (requesterEmail: string, request: ResourceTypeRequest): Promise<ResourceType> => {
+    const response = await apiClient.post<ResourceType>('/inventory/types', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateType: async (requesterEmail: string, typeId: string, request: ResourceTypeRequest): Promise<ResourceType> => {
+    const response = await apiClient.put<ResourceType>(`/inventory/types/${encodeURIComponent(typeId)}`, request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getItems: async (requesterEmail: string): Promise<InventoryItem[]> => {
+    const response = await apiClient.get<InventoryItem[]>('/inventory/items', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  createItem: async (requesterEmail: string, request: InventoryItemRequest): Promise<InventoryItem> => {
+    const response = await apiClient.post<InventoryItem>('/inventory/items', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateItem: async (requesterEmail: string, itemId: string, request: InventoryItemRequest): Promise<InventoryItem> => {
+    const response = await apiClient.put<InventoryItem>(`/inventory/items/${encodeURIComponent(itemId)}`, request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  adjustQuantity: async (requesterEmail: string, itemId: string, quantityDelta: number): Promise<InventoryItem> => {
+    const response = await apiClient.patch<InventoryItem>(`/inventory/items/${encodeURIComponent(itemId)}/quantity`, { quantityDelta }, { params: { requesterEmail } });
     return response.data;
   },
 };

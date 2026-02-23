@@ -1,93 +1,62 @@
 .common-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 12px 24px;
+  padding: 10px 20px;
   display: flex;
   align-items: center;
   gap: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   position: sticky;
   top: 0;
   z-index: 1000;
-  min-height: 70px;
+  height: 50px;
 }
 
-.header-breadcrumbs {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex: 0 0 25%;
-  min-width: 150px;
-}
-
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.breadcrumb-item a {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.breadcrumb-item a:hover {
-  color: white;
-}
-
-.breadcrumb-separator {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.breadcrumb-current {
-  color: white;
-  font-weight: 500;
-}
-
-.header-center {
-  display: flex;
-  justify-content: center;
+.header-spacer {
   flex: 1;
 }
 
 .logo-container {
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0;
+  cursor: pointer;
 }
 
-.carousel-icon {
-  font-size: 40px;
-  animation: rotate 20s linear infinite;
+.logo-container:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.carousel-icon-img {
+  width: 32px;
+  height: 32px;
+  display: block;
+  object-fit: contain;
 }
 
 .carousel-title {
   margin: 0;
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   font-family: 'Georgia', 'Garamond', serif;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+  text-shadow: 
+    -1px -1px 1px rgba(255, 255, 255, 0.3),
+    1px 1px 1px rgba(0, 0, 0, 0.3),
+    0px 1px 2px rgba(0, 0, 0, 0.2);
+  text-transform: lowercase;
+  font-style: italic;
 }
 
 .header-profile {
   display: flex;
   justify-content: flex-end;
-  flex: 0 0 25%;
-  min-width: 80px;
+  flex-shrink: 0;
 }
 
 .profile-menu-container {

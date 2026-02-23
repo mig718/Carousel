@@ -1,10 +1,11 @@
 ﻿# Build script for Carousel backend and frontend
 # Usage: .\.build.ps1 [[-Service] <shortcut>] [-BackendOnly] [-FrontendOnly]
-# Service shortcuts: auth, user, approve, gateway
+# Service shortcuts: auth, user, approve, gateway, frontend
 # Examples: 
 #   .\.build.ps1                     # Build all backend and frontend
 #   .\.build.ps1 -BackendOnly        # Build all backend services only
 #   .\.build.ps1 -FrontendOnly       # Build frontend only
+#   .\.build.ps1 frontend            # Build frontend only (shortcut)
 #   .\.build.ps1 -Service auth       # Build auth-service only
 
 param(
@@ -36,6 +37,13 @@ $buildSpecificService = $false
 
 if ($BackendOnly) { $buildFrontend = $false }
 if ($FrontendOnly) { $buildBackend = $false }
+
+# Special handling for "frontend" shortcut
+if ($Service -eq "frontend") {
+    $buildBackend = $false
+    $buildFrontend = $true
+    $Service = $null
+}
 
 # Check if a specific service was requested
 if ($Service) {

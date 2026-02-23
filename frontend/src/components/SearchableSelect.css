@@ -1,0 +1,115 @@
+.searchable-select-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.searchable-select-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 6px;
+}
+
+.searchable-select-label .required {
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.searchable-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-select-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #2c3e50;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.searchable-select-input::placeholder {
+  color: #95a5a6;
+}
+
+.searchable-select-input:hover:not(:disabled) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.searchable-select-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.searchable-select-input:disabled {
+  background-color: #f5f7fa;
+  color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.searchable-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  z-index: 1000;
+}
+
+.searchable-select-option {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.searchable-select-option:hover {
+  background-color: #f5f7fa;
+}
+
+.searchable-select-option.selected {
+  background-color: #e8eef7;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.searchable-select-no-options {
+  padding: 12px;
+  text-align: center;
+  color: #95a5a6;
+  font-size: 13px;
+}
+
+/* Scrollbar styling */
+.searchable-select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.searchable-select-dropdown::-webkit-scrollbar-track {
+  background: #f5f7fa;
+}
+
+.searchable-select-dropdown::-webkit-scrollbar-thumb {
+  background: #bdc3c7;
+  border-radius: 3px;
+}
+
+.searchable-select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #95a5a6;
+}

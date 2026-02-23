@@ -1,0 +1,121 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carousel logo">
+  <defs>
+    <linearGradient id="gradPage1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff8cc"/>
+      <stop offset="100%" stop-color="#ffe3ef"/>
+    </linearGradient>
+    <linearGradient id="gradPage2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff5bf"/>
+      <stop offset="100%" stop-color="#ffd8ea"/>
+    </linearGradient>
+    <linearGradient id="gradPage3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff9d8"/>
+      <stop offset="100%" stop-color="#ffe7f1"/>
+    </linearGradient>
+    <style>
+      .ink { fill: #111111; }
+      .line { fill: none; stroke: #111111; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+      .line-thin { fill: none; stroke: #111111; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+      .paper { fill: #fffdf8; }
+    </style>
+  </defs>
+
+  <circle cx="128" cy="48" r="4" class="ink" />
+
+  <polygon points="128,52 70,105 90,105" fill="url(#gradPage1)" />
+  <polygon points="128,52 90,105 110,105" fill="url(#gradPage2)" />
+  <polygon points="128,52 110,105 128,108" fill="url(#gradPage3)" />
+  <polygon points="128,52 128,108 146,105" fill="url(#gradPage1)" />
+  <polygon points="128,52 146,105 166,105" fill="url(#gradPage2)" />
+  <polygon points="128,52 166,105 186,105" fill="url(#gradPage3)" />
+
+  <line x1="128" y1="52" x2="70" y2="105" class="line-thin" />
+  <line x1="128" y1="52" x2="90" y2="105" class="line-thin" />
+  <line x1="128" y1="52" x2="110" y2="105" class="line-thin" />
+  <line x1="128" y1="52" x2="128" y2="108" class="line-thin" />
+  <line x1="128" y1="52" x2="146" y2="105" class="line-thin" />
+  <line x1="128" y1="52" x2="166" y2="105" class="line-thin" />
+  <line x1="128" y1="52" x2="186" y2="105" class="line-thin" />
+
+  <circle cx="62" cy="105" r="10" class="paper" />
+  <circle cx="79" cy="102" r="10" class="paper" />
+  <circle cx="96" cy="105" r="10" class="paper" />
+  <circle cx="113" cy="108" r="10" class="paper" />
+  <circle cx="128" cy="110" r="12" class="paper" />
+  <circle cx="143" cy="108" r="10" class="paper" />
+  <circle cx="160" cy="105" r="10" class="paper" />
+  <circle cx="177" cy="102" r="10" class="paper" />
+  <circle cx="194" cy="105" r="10" class="paper" />
+
+  <circle cx="62" cy="105" r="10" class="line-thin" />
+  <circle cx="79" cy="102" r="10" class="line-thin" />
+  <circle cx="96" cy="105" r="10" class="line-thin" />
+  <circle cx="113" cy="108" r="10" class="line-thin" />
+  <circle cx="128" cy="110" r="12" class="line-thin" />
+  <circle cx="143" cy="108" r="10" class="line-thin" />
+  <circle cx="160" cy="105" r="10" class="line-thin" />
+  <circle cx="177" cy="102" r="10" class="line-thin" />
+  <circle cx="194" cy="105" r="10" class="line-thin" />
+
+  <rect x="64" y="105" width="4" height="35" class="ink" />
+  <rect x="110" y="110" width="4" height="30" class="ink" />
+  <rect x="142" y="110" width="4" height="30" class="ink" />
+  <rect x="188" y="105" width="4" height="35" class="ink" />
+
+  <g>
+    <ellipse cx="75" cy="145" rx="6" ry="7" class="paper" />
+    <polygon points="75,138 72,133 78,135" class="paper" />
+    <rect x="73" y="152" width="4" height="8" class="paper" />
+    <ellipse cx="75" cy="165" rx="8" ry="10" class="paper" />
+    <rect x="70" y="175" width="3" height="15" class="ink" />
+    <rect x="79" y="175" width="3" height="15" class="ink" />
+    <circle cx="76" cy="144" r="1.2" class="ink" />
+    <ellipse cx="75" cy="145" rx="6" ry="7" class="line-thin" />
+    <polygon points="75,138 72,133 78,135" class="line-thin" />
+    <rect x="73" y="152" width="4" height="8" class="line-thin" />
+    <ellipse cx="75" cy="165" rx="8" ry="10" class="line-thin" />
+    <path d="M82 163 Q90 160 92 170" class="line-thin" />
+  </g>
+
+  <g>
+    <ellipse cx="128" cy="142" rx="6" ry="7" class="paper" />
+    <polygon points="128,135 125,130 131,132" class="paper" />
+    <rect x="126" y="149" width="4" height="8" class="paper" />
+    <ellipse cx="128" cy="162" rx="9" ry="11" class="paper" />
+    <rect x="122" y="173" width="3" height="16" class="ink" />
+    <rect x="131" y="173" width="3" height="16" class="ink" />
+    <circle cx="129" cy="141" r="1.2" class="ink" />
+    <ellipse cx="128" cy="142" rx="6" ry="7" class="line-thin" />
+    <polygon points="128,135 125,130 131,132" class="line-thin" />
+    <rect x="126" y="149" width="4" height="8" class="line-thin" />
+    <ellipse cx="128" cy="162" rx="9" ry="11" class="line-thin" />
+    <path d="M136 160 Q144 157 146 168" class="line-thin" />
+  </g>
+
+  <g>
+    <ellipse cx="181" cy="145" rx="6" ry="7" class="paper" />
+    <polygon points="181,138 178,133 184,135" class="paper" />
+    <rect x="179" y="152" width="4" height="8" class="paper" />
+    <ellipse cx="181" cy="165" rx="8" ry="10" class="paper" />
+    <rect x="176" y="175" width="3" height="15" class="ink" />
+    <rect x="185" y="175" width="3" height="15" class="ink" />
+    <circle cx="182" cy="144" r="1.2" class="ink" />
+    <ellipse cx="181" cy="145" rx="6" ry="7" class="line-thin" />
+    <polygon points="181,138 178,133 184,135" class="line-thin" />
+    <rect x="179" y="152" width="4" height="8" class="line-thin" />
+    <ellipse cx="181" cy="165" rx="8" ry="10" class="line-thin" />
+    <path d="M188 163 Q196 160 198 170" class="line-thin" />
+  </g>
+
+  <rect x="35" y="190" width="186" height="8" rx="1" class="paper" />
+  <rect x="35" y="190" width="186" height="8" rx="1" class="line" />
+  <line x1="45" y1="190" x2="45" y2="198" class="line-thin" />
+  <line x1="65" y1="190" x2="65" y2="198" class="line-thin" />
+  <line x1="85" y1="190" x2="85" y2="198" class="line-thin" />
+  <line x1="105" y1="190" x2="105" y2="198" class="line-thin" />
+  <line x1="128" y1="190" x2="128" y2="198" class="line-thin" />
+  <line x1="151" y1="190" x2="151" y2="198" class="line-thin" />
+  <line x1="171" y1="190" x2="171" y2="198" class="line-thin" />
+  <line x1="191" y1="190" x2="191" y2="198" class="line-thin" />
+  <line x1="211" y1="190" x2="211" y2="198" class="line-thin" />
+</svg>
