@@ -37,6 +37,9 @@ public class RoleManagementService {
         createDefaultRoleIfMissing("Support", "Full access to user management");
         createDefaultRoleIfMissing("ReadOnly", "Read-only access");
         createDefaultRoleIfMissing("PowerUser", "Elevated access to advanced functionality");
+        createDefaultRoleIfMissing("InventoryManager", "Manage inventory items and type metadata");
+        createDefaultRoleIfMissing("InventoryUser", "Manage inventory items and quantities");
+        createDefaultRoleIfMissing("InventoryAdmin", "Inventory administration with type/subtype management");
     }
 
     private void createDefaultRoleIfMissing(String name, String description) {
@@ -133,7 +136,7 @@ public class RoleManagementService {
 
         if (assignment == null || assignment.getRoles().isEmpty()) {
             if (isAdmin) {
-                return List.of("ReadOnly", "Support");
+                return List.of("ReadOnly", "Support", "InventoryManager");
             }
             return List.of("ReadOnly");
         }
@@ -141,6 +144,9 @@ public class RoleManagementService {
         List<String> resolved = new ArrayList<>(assignment.getRoles());
         if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("Support"))) {
             resolved.add("Support");
+        }
+        if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("InventoryManager"))) {
+            resolved.add("InventoryManager");
         }
 
         return resolved;

@@ -67,6 +67,21 @@ services:
       - auth-service
       - user-service
       - approval-service
+      - inventory-service
+    networks:
+      - carousel-network
+
+  inventory-service:
+    build:
+      context: ./backend/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8005:8005"
+    depends_on:
+      - mongodb
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/carousel_inventory?authSource=admin
     networks:
       - carousel-network
 

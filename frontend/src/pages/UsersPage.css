@@ -1,72 +1,17 @@
 .users-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-.users-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.back-link {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.users-list {
-  display: grid;
-  gap: 12px;
-}
-
-.user-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr 80px;
-  gap: 12px;
-  background: white;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
-  align-items: center;
-}
-
-.user-row input,
-.user-row select {
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.btn-primary {
-  padding: 8px 12px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  white-space: nowrap;
-  font-size: 14px;
   width: 100%;
-  box-sizing: border-box;
+  max-width: none;
+  margin: 0;
+  padding: 8px 0;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #5568d3;
+.users-container .data-table-container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 16px 20px;
 }
 
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-message {
+.users-container .error-message {
   background: #ffe5e5;
   color: #b00;
   padding: 10px;
@@ -74,36 +19,121 @@
   margin-bottom: 12px;
 }
 
-.success-message {
-  background: #e8f8eb;
-  color: #1b6b2c;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 12px;
+.users-container .data-table .table-cell input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
 }
 
-.btn-primary {
-  padding: 10px 16px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  white-space: nowrap;
-  min-width: max-content;
+.users-container .data-table .table-row {
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(220px, 1.2fr) minmax(110px, 0.7fr) 64px;
+  gap: 8px;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: #5568d3;
+.users-container .data-table .table-header {
+  padding: 12px 18px;
 }
 
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.users-container .data-table .table-body .table-row {
+  padding: 12px 18px;
 }
 
-input:disabled {
+.users-container .data-table .table-cell input:focus {
+  outline: none;
+  border-color: #fca5a5;
+  box-shadow: 0 0 0 2px rgba(252, 165, 165, 0.2);
+}
+
+.users-container .email-field {
   background-color: #f5f5f5;
-  color: #999;
+  color: #7b8794;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.users-container .access-level-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecf0f1;
+  color: #34495e;
+  width: 88px;
+  height: 32px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.users-container .access-level-label.is-admin {
+  background: #fef2f2;
+  color: #f87171;
+}
+
+
+.users-container .editable-control {
+  position: relative;
+  width: 100%;
+}
+
+.users-container .editable-control input,
+.users-container .editable-control select {
+  width: 100%;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.users-container .editable-control input:focus,
+.users-container .editable-control select:focus {
+  outline: none;
+  border-color: #fca5a5;
+  box-shadow: 0 0 0 2px rgba(252, 165, 165, 0.2);
+}
+
+.users-container .editable-control .control-check {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e8f7ee;
+  color: #1e8e3e;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.users-container .editable-control.is-dirty .control-check {
+  opacity: 1;
+}
+
+@media (max-width: 1100px) {
+  .users-container .data-table .table-row {
+    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(190px, 1.1fr) minmax(100px, 0.6fr) 64px;
+  }
+
+  .users-container .data-table-container {
+    max-width: 100%;
+    padding: 0 12px 20px;
+  }
 }

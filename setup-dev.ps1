@@ -59,7 +59,7 @@ $activeUsers = @(
         LastName = "Johnson"
         Password = "SecureTest@2024"
         AccessLevel = "Admin"
-        Roles = @("Support", "PowerUser")
+        Roles = @("Support", "PowerUser", "InventoryManager", "InventoryAdmin")
         Description = "Admin user"
     },
     @{
@@ -88,6 +88,24 @@ $activeUsers = @(
         AccessLevel = "User"
         Roles = @("Support")
         Description = "Support user"
+    },
+    @{
+        Email = "ivy.morris@warehouse.io"
+        FirstName = "Ivy"
+        LastName = "Morris"
+        Password = "SecureTest@2024"
+        AccessLevel = "User"
+        Roles = @("InventoryAdmin", "InventoryManager")
+        Description = "Inventory admin"
+    },
+    @{
+        Email = "isaac.turner@warehouse.io"
+        FirstName = "Isaac"
+        LastName = "Turner"
+        Password = "SecureTest@2024"
+        AccessLevel = "User"
+        Roles = @("InventoryUser")
+        Description = "Inventory user"
     }
 )
 
@@ -202,7 +220,10 @@ db = db.getSiblingDB('carousel_roles');
 db.roles.insertMany([
   { name: 'Support', description: 'Full access to user management' },
   { name: 'ReadOnly', description: 'Read-only access' },
-  { name: 'PowerUser', description: 'Elevated access to advanced functionality' }
+    { name: 'PowerUser', description: 'Elevated access to advanced functionality' },
+    { name: 'InventoryManager', description: 'Manage inventory items and type metadata' },
+    { name: 'InventoryUser', description: 'Manage inventory items and quantities' },
+    { name: 'InventoryAdmin', description: 'Inventory administration with type/subtype management' }
 ]);
 
 "@
@@ -238,7 +259,7 @@ Write-Host "  Admin Access:" -ForegroundColor Cyan
 Write-Host "    Email: alice.johnson@acmecorp.com"
 Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: Admin"
-Write-Host "    Roles: Support, PowerUser"
+Write-Host "    Roles: Support, PowerUser, InventoryManager, InventoryAdmin"
 Write-Host ""
 Write-Host "  Support Access:" -ForegroundColor Cyan
 Write-Host "    Email: frank.martinez@supportteam.io"
@@ -257,6 +278,18 @@ Write-Host "    Email: carol.williams@acmecorp.com"
 Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: User"
 Write-Host "    Roles: ReadOnly"
+Write-Host ""
+Write-Host "  Inventory Admin Access:" -ForegroundColor Cyan
+Write-Host "    Email: ivy.morris@warehouse.io"
+Write-Host "    Password: SecureTest@2024"
+Write-Host "    AccessLevel: User"
+Write-Host "    Roles: InventoryAdmin, InventoryManager"
+Write-Host ""
+Write-Host "  Inventory User Access:" -ForegroundColor Cyan
+Write-Host "    Email: isaac.turner@warehouse.io"
+Write-Host "    Password: SecureTest@2024"
+Write-Host "    AccessLevel: User"
+Write-Host "    Roles: InventoryUser"
 Write-Host ""
 Write-Host "  Pending Admin Approval:" -ForegroundColor Yellow
 Write-Host "    david.brown@techstartup.io"

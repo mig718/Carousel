@@ -1,0 +1,13 @@
+<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Empty inventory">
+  <defs>
+    <linearGradient id="boxFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e9eef5"/>
+    </linearGradient>
+  </defs>
+  <rect x="28" y="44" width="104" height="76" rx="10" fill="url(#boxFill)" stroke="#2c3e50" stroke-width="2"/>
+  <path d="M28 66h104" stroke="#2c3e50" stroke-width="2"/>
+  <path d="M44 44l18 22m54-22-18 22" stroke="#2c3e50" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="120" cy="40" r="10" fill="#ffffff" stroke="#2c3e50" stroke-width="2"/>
+  <path d="M117 40h6m-3-3v6" stroke="#2c3e50" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -75,3 +75,40 @@ export interface UpdateOwnProfileRequest {
   firstName: string;
   lastName: string;
 }
+
+export interface ResourceType {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  parentTypeId?: string;
+  parentTypeName?: string;
+}
+
+export interface ResourceTypeRequest {
+  name: string;
+  description: string;
+  icon: string;
+  parentTypeId?: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  description: string;
+  resourceTypeId: string;
+  resourceTypeName: string;
+  resourceSubTypeId?: string;
+  resourceSubTypeName?: string;
+  availableQuantity: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface InventoryItemRequest {
+  name: string;
+  description: string;
+  resourceTypeId: string;
+  resourceSubTypeId?: string;
+  availableQuantity?: number;
+}

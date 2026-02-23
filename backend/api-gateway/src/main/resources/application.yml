@@ -37,6 +37,10 @@ spring:
           uri: lb://role-service
           predicates:
             - Path=/api/roles/**
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/inventory/**
 
 server:
   port: 8000
@@ -53,6 +57,8 @@ springdoc:
         url: /api/approvals/v3/api-docs
       - name: Role Service
         url: /api/roles/v3/api-docs
+      - name: Inventory Service
+        url: /api/inventory/v3/api-docs
     urlsPrimaryName: Auth Service
 
 management:
