@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { roleService, userService } from '../services/userService';
-import './SettingsInventoryPage.css';
+import NotImplementedCard from '../components/NotImplementedCard';
+import { NotImplementedException } from '../types/NotImplementedException';
 
 const SettingsInventoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user);
   const email = useSelector((state: RootState) => state.auth.email) || localStorage.getItem('email') || '';
   const [roles, setRoles] = useState<string[]>([]);
@@ -62,20 +64,34 @@ const SettingsInventoryPage: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return (
-    <div className="settings-detail">
-      <div className="settings-detail-header">
-        <h1>Inventory Settings</h1>
-        <p>Common workflows for inventory support.</p>
-      </div>
+  const onNotImplementedClick = (featureName: string) => {
+    try {
+      throw new NotImplementedException({
+        title: featureName,
+        message: 'Functionality not yet implemented',
+        description: `The ${featureName.toLowerCase()} workflow is currently in development and will be available in a future release.`,
+        icon: '🧰',
+        variant: 'search',
+      });
+    } catch (error) {
+      if (error instanceof NotImplementedException) {
+        navigate('/not-implemented', { state: error.payload });
+        return;
+      }
 
-      <div className="settings-list">
-        <div className="settings-list-item">Add item type</div>
-        <div className="settings-list-item">Update inventory item</div>
-        <div className="settings-list-item">Adjust stock levels</div>
-        <div className="settings-list-item">Archive item</div>
-      </div>
-    </div>
+      throw error;
+    }
+  };
+
+  return (
+    <NotImplementedCard
+      title="Inventory Settings"
+      message="Functionality not yet implemented"
+      description="Common workflows for inventory support."
+      variant="settings-list"
+      items={['Add item type', 'Update inventory item', 'Adjust stock levels', 'Archive item']}
+      onItemClick={onNotImplementedClick}
+    />
   );
 };
 

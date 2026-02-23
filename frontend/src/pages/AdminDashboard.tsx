@@ -64,6 +64,15 @@ const AdminDashboard: React.FC = () => {
           <span className="admin-card-action">Open</span>
         </button>
 
+        <button className="admin-card" onClick={() => navigate('/admin/roles')}>
+          <div className="admin-card-icon" aria-hidden="true">🔑</div>
+          <div className="admin-card-content">
+            <h2>Roles</h2>
+            <p>Manage roles and their user assignments.</p>
+          </div>
+          <span className="admin-card-action">Open</span>
+        </button>
+
         <button className="admin-card" onClick={() => navigate('/admin/inventory')}>
           <div className="admin-card-icon" aria-hidden="true">📦</div>
           <div className="admin-card-content">

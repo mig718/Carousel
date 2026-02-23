@@ -1,6 +1,7 @@
 package com.carousel.role.service;
 
 import com.carousel.role.client.UserServiceClient;
+import com.carousel.role.config.PredefinedRolesConfig;
 import com.carousel.role.domain.Role;
 import com.carousel.role.domain.UserRoleAssignment;
 import com.carousel.role.dto.RoleAssignmentRequest;
@@ -15,40 +16,57 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class RoleManagementService {
     private final RoleRepository roleRepository;
     private final UserRoleAssignmentRepository assignmentRepository;
     private final UserServiceClient userServiceClient;
+    private final PredefinedRolesConfig predefinedRolesConfig;
 
     public RoleManagementService(
             RoleRepository roleRepository,
             UserRoleAssignmentRepository assignmentRepository,
-            UserServiceClient userServiceClient
+            UserServiceClient userServiceClient,
+            PredefinedRolesConfig predefinedRolesConfig
     ) {
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.userServiceClient = userServiceClient;
+        this.predefinedRolesConfig = predefinedRolesConfig;
     }
 
     @PostConstruct
     public void ensureDefaultRoles() {
-        createDefaultRoleIfMissing("Support", "Full access to user management");
-        createDefaultRoleIfMissing("ReadOnly", "Read-only access");
-        createDefaultRoleIfMissing("PowerUser", "Elevated access to advanced functionality");
-        createDefaultRoleIfMissing("InventoryManager", "Manage inventory items and type metadata");
-        createDefaultRoleIfMissing("InventoryUser", "Manage inventory items and quantities");
-        createDefaultRoleIfMissing("InventoryAdmin", "Inventory administration with type/subtype management");
-    }
-
-    private void createDefaultRoleIfMissing(String name, String description) {
-        if (!roleRepository.existsByName(name)) {
-            roleRepository.save(new Role(null, name, description));
-        }
+        // Clean up predefined roles from database if they exist
+        // (they should not be in the database anymore)
+        List<String> predefinedNames = predefinedRolesConfig.getPredefined().stream()
+                .map(RoleDto::getName)
+                .toList();
+        
+        predefinedNames.forEach(name -> {
+            if (roleRepository.existsByName(name)) {
+                roleRepository.deleteByName(name);
+            }
+        });
     }
 
     public List<RoleDto> getAllRoles() {
+        // Combine predefined roles and custom roles from database
+        List<RoleDto> predefined = new ArrayList<>(predefinedRolesConfig.getPredefined());
+        List<RoleDto> custom = roleRepository.findAll().stream()
+                .sorted(Comparator.comparing(Role::getName))
+                .map(role -> new RoleDto(role.getName(), role.getDescription()))
+                .toList();
+        
+        return Stream.concat(predefined.stream(), custom.stream())
+                .sorted(Comparator.comparing(RoleDto::getName))
+                .toList();
+    }
+
+    public List<RoleDto> getCustomRoles() {
+        // Return only custom roles from database
         return roleRepository.findAll().stream()
                 .sorted(Comparator.comparing(Role::getName))
                 .map(role -> new RoleDto(role.getName(), role.getDescription()))
@@ -57,6 +75,14 @@ public class RoleManagementService {
 
     public RoleDto createRole(RoleDto request, String requesterEmail) {
         validateAdmin(requesterEmail);
+        
+        // Check if role name conflicts with predefined roles
+        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(request.getName()));
+        if (isPredefined) {
+            throw new RuntimeException("Cannot create custom role with predefined role name");
+        }
+        
         if (roleRepository.existsByName(request.getName())) {
             throw new RuntimeException("Role already exists");
         }
@@ -67,6 +93,14 @@ public class RoleManagementService {
 
     public RoleDto updateRole(String roleName, RoleDto request, String requesterEmail) {
         validateAdmin(requesterEmail);
+        
+        // Check if trying to update a predefined role
+        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
+        if (isPredefined) {
+            throw new RuntimeException("Cannot update predefined role");
+        }
+        
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
@@ -77,6 +111,14 @@ public class RoleManagementService {
 
     public void deleteRole(String roleName, String requesterEmail) {
         validateAdmin(requesterEmail);
+        
+        // Check if trying to delete a predefined role
+        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
+        if (isPredefined) {
+            throw new RuntimeException("Cannot delete predefined role");
+        }
+        
         if (!roleRepository.existsByName(roleName)) {
             throw new RuntimeException("Role not found");
         }
@@ -157,7 +199,12 @@ public class RoleManagementService {
     }
 
     private void ensureRoleExists(String roleName) {
-        if (!roleRepository.existsByName(roleName)) {
+        // Check both predefined and custom roles
+        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
+                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
+        boolean isCustom = roleRepository.existsByName(roleName);
+        
+        if (!isPredefined && !isCustom) {
             throw new RuntimeException("Role not found");
         }
     }

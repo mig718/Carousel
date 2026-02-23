@@ -119,6 +119,11 @@ export const roleService = {
     return response.data;
   },
 
+  getCustomRoles: async (): Promise<Role[]> => {
+    const response = await apiClient.get<Role[]>('/roles/custom');
+    return response.data;
+  },
+
   getRolesForUser: async (email: string): Promise<string[]> => {
     const response = await apiClient.get<string[]>(`/roles/user/${encodeURIComponent(email)}`);
     return response.data;

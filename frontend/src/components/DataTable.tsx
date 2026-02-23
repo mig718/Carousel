@@ -18,6 +18,7 @@ interface DataTableProps {
   columns: DataColumn[];
   data: any[];
   onRowUpdate?: (rowId: string, updates: Record<string, any>) => Promise<void>;
+  onRowDelete?: (rowId: string) => Promise<void>;
   isLoading?: boolean;
   error?: string | null;
   emptyMessage?: string;
@@ -36,6 +37,7 @@ const DataTable: React.FC<DataTableProps> = ({
   columns,
   data,
   onRowUpdate,
+  onRowDelete,
   isLoading = false,
   error = null,
   emptyMessage = 'No data available',
@@ -45,6 +47,7 @@ const DataTable: React.FC<DataTableProps> = ({
 }) => {
   const [editState, setEditState] = React.useState<EditState>({});
   const [savingId, setSavingId] = React.useState<string | null>(null);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const handleFieldCommit = (rowId: string, field: string, value: any, originalValue: any) => {
     setEditState((prev) => {
@@ -90,6 +93,19 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   };
 
+  const handleDelete = async (rowId: string) => {
+    if (!onRowDelete) return;
+
+    setDeletingId(rowId);
+    try {
+      await onRowDelete(rowId);
+    } catch (err) {
+      console.error('Failed to delete:', err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (isLoading) {
     return <div className="data-table-loading">Loading...</div>;
   }
@@ -107,8 +123,14 @@ const DataTable: React.FC<DataTableProps> = ({
   if (data.length === 0) {
     return (
       <div className="data-table-empty-card">
-        <div className="empty-icon">📋</div>
-        <h3>No Data Yet</h3>
+        <svg className="empty-icon-svg" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="12" width="48" height="40" rx="2" stroke="#cbd5e0" strokeWidth="2" fill="none"/>
+          <line x1="8" y1="20" x2="56" y2="20" stroke="#cbd5e0" strokeWidth="2"/>
+          <line x1="16" y1="28" x2="48" y2="28" stroke="#e2e8f0" strokeWidth="2"/>
+          <line x1="16" y1="36" x2="48" y2="36" stroke="#e2e8f0" strokeWidth="2"/>
+          <line x1="16" y1="44" x2="48" y2="44" stroke="#e2e8f0" strokeWidth="2"/>
+        </svg>
+        <h3>No Entries Yet</h3>
         <p>{emptyMessage}</p>
       </div>
     );
@@ -131,7 +153,7 @@ const DataTable: React.FC<DataTableProps> = ({
               {col.label}
             </div>
           ))}
-          {onRowUpdate && <div className="table-cell table-header-cell table-action-header" aria-hidden="true"></div>}
+          {(onRowUpdate || onRowDelete) && <div className="table-cell table-header-cell table-action-header" aria-hidden="true"></div>}
         </div>
 
         <div className="table-body">
@@ -157,16 +179,28 @@ const DataTable: React.FC<DataTableProps> = ({
                   })()}
                 </div>
               ))}
-              {onRowUpdate && (
+              {(onRowUpdate || onRowDelete) && (
                 <div className="table-cell table-action-cell">
-                  <button
-                    className="btn-save-row"
-                    onClick={() => handleSave(row.id)}
-                    disabled={!isRowModified(row.id) || savingId === row.id}
-                    title={!isRowModified(row.id) ? 'No changes to save' : 'Save changes'}
-                  >
-                    {savingId === row.id ? '...' : 'Save'}
-                  </button>
+                  {onRowUpdate && (
+                    <button
+                      className="btn-save-row"
+                      onClick={() => handleSave(row.id)}
+                      disabled={!isRowModified(row.id) || savingId === row.id}
+                      title={!isRowModified(row.id) ? 'No changes to save' : 'Save changes'}
+                    >
+                      {savingId === row.id ? '...' : 'Save'}
+                    </button>
+                  )}
+                  {onRowDelete && (
+                    <button
+                      className="btn-delete-row"
+                      onClick={() => handleDelete(row.id)}
+                      disabled={deletingId === row.id}
+                      title="Delete"
+                    >
+                      {deletingId === row.id ? '...' : '×'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

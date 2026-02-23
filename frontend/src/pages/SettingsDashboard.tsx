@@ -66,6 +66,15 @@ const SettingsDashboard: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const iconUserManagement = (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+
   return (
     <div className="settings-dashboard">
       <div className="settings-dashboard-header">
@@ -76,9 +85,9 @@ const SettingsDashboard: React.FC = () => {
       <div className="settings-card-grid">
         {showUsersCard && (
           <button className="settings-card" onClick={() => navigate('/settings/users')}>
-            <div className="settings-card-icon" aria-hidden="true">🧭</div>
+            <div className="settings-card-icon" aria-hidden="true">{iconUserManagement}</div>
             <div className="settings-card-content">
-              <h2>Users</h2>
+              <h2>User Management</h2>
               <p>Guided actions for common user support tasks.</p>
             </div>
             <span className="settings-card-action">Open</span>

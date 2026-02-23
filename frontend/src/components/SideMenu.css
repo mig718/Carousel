@@ -164,6 +164,18 @@
   transform: translateY(-50%) scale(0.97);
 }
 
+.menu-link.admin {
+  color: #b8730d;
+}
+
+.menu-link.admin:hover {
+  color: #c87a3d;
+}
+
+.menu-link.admin.active {
+  color: #a66209;
+}
+
 .menu-exit {
   display: block;
   width: 100%;
