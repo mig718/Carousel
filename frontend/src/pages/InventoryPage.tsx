@@ -222,7 +222,7 @@ const InventoryPage: React.FC = () => {
           <div className="inventory-empty-dashboard">
             <img
               className="inventory-empty-icon"
-              src={`${process.env.PUBLIC_URL}/inventory-empty.svg`}
+              src="/inventory-empty.svg"
               alt="Empty inventory"
             />
             <h2>There is no data here yet...</h2>

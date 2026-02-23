@@ -53,9 +53,8 @@ describe('RegisterPage', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/Read Only/i)).toBeInTheDocument();
-    expect(screen.getByText(/Read Write/i)).toBeInTheDocument();
-    expect(screen.getByText(/Admin/i)).toBeInTheDocument();
+    expect(screen.getByText(/User \(No Approval Required\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Admin \(Requires Approval\)/i)).toBeInTheDocument();
   });
 
   test('shows login link', () => {

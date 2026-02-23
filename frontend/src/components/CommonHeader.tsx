@@ -39,7 +39,7 @@ const CommonHeader: React.FC = () => {
   return (
     <header className="common-header">
       <button className="logo-container" onClick={() => navigate('/home')}>
-        <img src={`${process.env.PUBLIC_URL}/carousel-logo.svg`} alt="Carousel" className="carousel-icon-img" />
+        <img src="/carousel-logo.svg" alt="Carousel" className="carousel-icon-img" />
         <h1 className="carousel-title">carousel</h1>
       </button>
 
