@@ -54,6 +54,13 @@
   font-size: 1.6rem;
 }
 
+.settings-card-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+}
+
 .settings-card-content h2 {
   margin: 0 0 6px 0;
   font-size: 1.2rem;

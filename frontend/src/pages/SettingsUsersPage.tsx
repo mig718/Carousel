@@ -5,6 +5,7 @@ import { RootState } from '../redux/store';
 import { roleService, userService } from '../services/userService';
 import NotImplementedCard from '../components/NotImplementedCard';
 import { NotImplementedException } from '../types/NotImplementedException';
+import './SettingsUsersPage.css';
 
 const SettingsUsersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -84,14 +85,31 @@ const SettingsUsersPage: React.FC = () => {
   };
 
   return (
-    <NotImplementedCard
-      title="User Settings"
-      message="Functionality not yet implemented"
-      description="Common support actions for user management."
-      variant="settings-list"
-      items={['New user', 'Edit user', 'Reset password', 'Deactivate user']}
-      onItemClick={onNotImplementedClick}
-    />
+    <div className="settings-users-page">
+      <div className="settings-section">
+        <NotImplementedCard
+          title="Users"
+          message="Functionality not yet implemented"
+          description="Common support actions for user management."
+          variant="settings-list"
+          items={['New user', 'Edit user', 'Reset password', 'Deactivate user']}
+          onItemClick={onNotImplementedClick}
+        />
+      </div>
+
+      <div className="settings-section-divider"></div>
+
+      <div className="settings-section">
+        <NotImplementedCard
+          title="Roles"
+          message="Functionality not yet implemented"
+          description="Manage user role assignments."
+          variant="settings-list"
+          items={['Assign Role', 'Drop Role', 'Create New Role']}
+          onItemClick={onNotImplementedClick}
+        />
+      </div>
+    </div>
   );
 };
 

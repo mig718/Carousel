@@ -21,9 +21,15 @@ public class RoleController {
     }
 
     @GetMapping
-    @Operation(summary = "List roles", description = "List all available roles")
+    @Operation(summary = "List roles", description = "List all available roles (predefined + custom)")
     public ResponseEntity<List<RoleDto>> getRoles() {
         return ResponseEntity.ok(roleService.getAllRoles());
+    }
+
+    @GetMapping("/custom")
+    @Operation(summary = "List custom roles", description = "List only custom roles from database")
+    public ResponseEntity<List<RoleDto>> getCustomRoles() {
+        return ResponseEntity.ok(roleService.getCustomRoles());
     }
 
     @PostMapping

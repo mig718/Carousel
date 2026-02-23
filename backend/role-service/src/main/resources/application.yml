@@ -33,3 +33,19 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+
+carousel:
+  roles:
+    predefined:
+      - name: Support
+        description: Full access to user management
+      - name: ReadOnly
+        description: Read-only access
+      - name: PowerUser
+        description: Elevated access to advanced functionality
+      - name: InventoryManager
+        description: Manage inventory items and type metadata
+      - name: InventoryUser
+        description: Manage inventory items and quantities
+      - name: InventoryAdmin
+        description: Inventory administration with type/subtype management

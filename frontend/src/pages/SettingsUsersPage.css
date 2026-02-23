@@ -1,0 +1,15 @@
+.settings-users-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-section {
+  width: 100%;
+}
+
+.settings-section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #d9dde3 20%, #d9dde3 80%, transparent);
+  margin: 32px 0;
+}

@@ -21,6 +21,9 @@ import SettingsDashboard from './pages/SettingsDashboard';
 import SettingsUsersPage from './pages/SettingsUsersPage';
 import SettingsInventoryPage from './pages/SettingsInventoryPage';
 import AdminAddUserPage from './pages/AdminAddUserPage';
+import AdminRolesPage from './pages/AdminRolesPage';
+import AdminAddRolePage from './pages/AdminAddRolePage';
+import AdminAddRoleAssignmentPage from './pages/AdminAddRoleAssignmentPage';
 import ProtectedLayout from './components/ProtectedLayout';
 
 import './App.css';
@@ -140,6 +143,36 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <ProtectedLayout>
                 <AdminAddUserPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/roles"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <AdminRolesPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/roles/add"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <AdminAddRolePage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/roles/assign"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <AdminAddRoleAssignmentPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }

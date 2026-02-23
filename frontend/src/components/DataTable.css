@@ -91,6 +91,10 @@
   text-align: right;
   padding-right: 8px;
   width: 64px;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .table-action-header {
@@ -126,6 +130,36 @@
   opacity: 0.6;
 }
 
+.btn-delete-row {
+  padding: 4px 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-delete-row:hover:not(:disabled) {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.btn-delete-row:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .data-table-loading {
   text-align: center;
   padding: 40px;
@@ -139,6 +173,7 @@
   padding: 60px 40px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
 }
 
 .empty-icon,
@@ -147,14 +182,31 @@
   margin-bottom: 16px;
 }
 
-.data-table-empty-card h3,
-.data-table-error-card h3 {
-  font-size: 1.3rem;
-  color: #2c3e50;
-  margin: 0 0 8px 0;
+.empty-icon-svg {
+  margin-bottom: 20px;
+  opacity: 0.4;
 }
 
-.data-table-empty-card p,
+.data-table-empty-card h3 {
+  font-size: 1.2rem;
+  color: #64748b;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.data-table-error-card h3 {
+  font-size: 1.3rem;
+  color: #dc2626;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.data-table-empty-card p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .data-table-error-card p {
   color: #7f8c8d;
   margin: 0;
