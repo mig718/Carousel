@@ -1,22 +1,35 @@
 package com.carousel.user.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "pending_users")
+@Entity
+@Table(name = "pending_users")
 public class PendingUser {
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
     private String firstName;
     private String lastName;
+    @Column(nullable = false, unique = true)
     private String email;
     private String password; // Store password temporarily until approval
+    @Enumerated(EnumType.STRING)
     private AccessLevel requestedAccessLevel;
     private String emailVerificationToken;
     private boolean emailVerified;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     public PendingUser() {}
@@ -85,6 +98,24 @@ public class PendingUser {
         public PendingUser build() {
             return new PendingUser(id, firstName, lastName, email, password, requestedAccessLevel, emailVerificationToken, emailVerified, createdAt, updatedAt);
         }
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
 

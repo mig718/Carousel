@@ -3,6 +3,18 @@ spring:
     web-application-type: reactive
   application:
     name: api-gateway
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carousel_roles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   cloud:
     gateway:
       globalcors:
@@ -36,7 +48,7 @@ spring:
         - id: role-service
           uri: lb://role-service
           predicates:
-            - Path=/api/roles/**
+            - Path=/api/roles,/api/roles/**
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
@@ -76,3 +88,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     instance-id: ${spring.application.name}:${random.value}
+
+carousel:
+  clients:
+    user-service-url: ${CAROUSEL_CLIENTS_USER_SERVICE_URL:http://localhost:8002/api/users}

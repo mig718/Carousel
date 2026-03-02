@@ -5,10 +5,12 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
     [switch]$Fast,
+    [switch]$NoBrowser,
+    [switch]$SkipGlobalHealth,
+    [switch]$AutoStartPostgres,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$RemainingArgs,
     [int]$HealthServicePort = 8004,
-    [int]$MongoPort = 27017,
     [int]$StartupTimeoutSeconds = 120,
     [string]$Service
 )
@@ -16,6 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 $BackendVersion = "1.0.0"
 $UseJarStartup = $Fast -or ($RemainingArgs -contains "--fast") -or ($args -contains "--fast")
+$ShouldAutoStartPostgres = $AutoStartPostgres -or ($RemainingArgs -contains "--auto-start-postgres") -or ($args -contains "--auto-start-postgres")
 $CheckMark = [char]0x2713
 $CrossMark = [char]0x2717
 
@@ -26,6 +29,19 @@ function Write-ColorOutput($color, $message) {
     Write-Host $message -ForegroundColor $color
 }
 
+function Clear-EnvVarIfBlank([string]$name) {
+    $value = [Environment]::GetEnvironmentVariable($name, "Process")
+    if ($null -ne $value -and [string]::IsNullOrWhiteSpace($value)) {
+        Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue
+    }
+}
+
+function Normalize-RoleServiceDbEnv() {
+    Clear-EnvVarIfBlank "SPRING_DATASOURCE_URL"
+    Clear-EnvVarIfBlank "SPRING_DATASOURCE_USERNAME"
+    Clear-EnvVarIfBlank "SPRING_DATASOURCE_PASSWORD"
+}
+
 # Load service map
 $ServiceMap = Get-ServiceMap ".\shortcuts.map"
 if (-not $ServiceMap) {
@@ -33,13 +49,150 @@ if (-not $ServiceMap) {
     exit 1
 }
 
-function Test-PortOpen($port) {
+function Test-TcpPortOpen([string]$hostName = "127.0.0.1", [int]$port, [int]$timeoutMs = 700) {
+    $client = New-Object System.Net.Sockets.TcpClient
     try {
-        $connection = Test-NetConnection -ComputerName "localhost" -Port $port -WarningAction SilentlyContinue
-        return [bool]$connection.TcpTestSucceeded
+        $asyncResult = $client.BeginConnect($hostName, $port, $null, $null)
+        if (-not $asyncResult.AsyncWaitHandle.WaitOne($timeoutMs, $false)) {
+            return $false
+        }
+
+        $client.EndConnect($asyncResult)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        $client.Close()
+    }
+}
+
+function Test-PortOpen($port) {
+    return (Test-TcpPortOpen -port $port)
+}
+
+function Test-PostgresReady([int]$port = 5432) {
+    return (Test-TcpPortOpen -port $port)
+}
+
+function Test-DockerEngineReady() {
+    try {
+        & docker info *> $null
+        return ($LASTEXITCODE -eq 0)
     } catch {
         return $false
     }
+}
+
+function Wait-DockerEngineReady([int]$timeoutSeconds = 120) {
+    $elapsed = 0
+    while ($elapsed -lt $timeoutSeconds) {
+        if (Test-DockerEngineReady) {
+            return $true
+        }
+
+        Start-Sleep -Seconds 2
+        $elapsed += 2
+    }
+
+    return $false
+}
+
+function Start-DockerEngineIfNeeded([int]$timeoutSeconds = 120) {
+    if (Test-DockerEngineReady) {
+        return $true
+    }
+
+    $dockerDesktopCandidates = @(
+        "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe",
+        "${env:ProgramFiles(x86)}\Docker\Docker\Docker Desktop.exe",
+        "$env:LocalAppData\Programs\Docker\Docker\Docker Desktop.exe"
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    $dockerDesktop = $dockerDesktopCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if ($dockerDesktop) {
+        Write-ColorOutput "Yellow" "[i] Docker engine is not ready. Attempting to start Docker Desktop..."
+        try {
+            Start-Process -FilePath $dockerDesktop | Out-Null
+        } catch {
+            Write-ColorOutput "Yellow" "[i] Unable to launch Docker Desktop executable directly: $($_.Exception.Message)"
+        }
+    }
+
+    try {
+        $dockerService = Get-Service -Name "com.docker.service" -ErrorAction SilentlyContinue
+        if ($dockerService -and $dockerService.Status -ne "Running") {
+            Write-ColorOutput "Yellow" "[i] Starting Windows service com.docker.service..."
+            Start-Service -Name "com.docker.service" -ErrorAction SilentlyContinue
+        }
+    } catch {
+    }
+
+    if (Wait-DockerEngineReady $timeoutSeconds) {
+        Write-ColorOutput "Green" "[+] Docker engine is ready"
+        return $true
+    }
+
+    return $false
+}
+
+function Wait-PostgresReady([int]$port = 5432, [int]$timeoutSeconds = 45) {
+    $elapsed = 0
+    while ($elapsed -lt $timeoutSeconds) {
+        if (Test-PostgresReady $port) {
+            return $true
+        }
+
+        Start-Sleep -Seconds 1
+        $elapsed += 1
+    }
+
+    return $false
+}
+
+function Ensure-PostgresAvailableForRoleService([bool]$allowAutoStart) {
+    if (Test-PostgresReady 5432) {
+        return $true
+    }
+
+    if (-not $allowAutoStart) {
+        Write-ColorOutput "Red" "[-] role-service requires PostgreSQL on localhost:5432, but it is not reachable."
+        Write-ColorOutput "Yellow" "[i] Start PostgreSQL with: npm run postgres:start"
+        Write-ColorOutput "Yellow" "[i] Or rerun with -AutoStartPostgres to let launcher auto-start it."
+        return $false
+    }
+
+    $docker = Get-Command "docker" -ErrorAction SilentlyContinue
+    if (-not $docker) {
+        Write-ColorOutput "Red" "[-] role-service requires PostgreSQL on localhost:5432, and Docker is not available for auto-start."
+        Write-ColorOutput "Yellow" "[i] Command to run once Docker is available: npm run postgres:start"
+        Write-ColorOutput "Yellow" "[i] If using local PostgreSQL service instead, start it and rerun launch."
+        return $false
+    }
+
+    if (-not (Start-DockerEngineIfNeeded 120)) {
+        Write-ColorOutput "Red" "[-] Docker CLI is installed but Docker engine is not ready."
+        Write-ColorOutput "Yellow" "[i] Start Docker Desktop (or Docker daemon), then rerun launch."
+        Write-ColorOutput "Yellow" "[i] Quick check: docker info"
+        return $false
+    }
+
+    Write-ColorOutput "Yellow" "[i] PostgreSQL not reachable. Attempting docker compose start for postgres..."
+    try {
+        & docker compose up -d postgres | Out-Null
+    } catch {
+        Write-ColorOutput "Red" "[-] Failed to auto-start postgres container: $($_.Exception.Message)"
+        return $false
+    }
+
+    if (Wait-PostgresReady 5432 60) {
+        Write-ColorOutput "Green" "[+] PostgreSQL is reachable on localhost:5432"
+        return $true
+    }
+
+    Write-ColorOutput "Red" "[-] PostgreSQL is still not reachable after waiting for container startup."
+    Write-ColorOutput "Yellow" "[i] Fail-fast mode enabled; rerun once postgres is ready."
+    Write-ColorOutput "Yellow" "[i] Quick checks: docker compose ps postgres ; docker compose logs --tail 50 postgres"
+    return $false
 }
 
 function Test-HttpReady($url) {
@@ -285,6 +438,10 @@ function Start-BackendServiceSequential($serviceName, $serviceVersion, $serviceD
         New-Item -ItemType Directory -Path ".\logs" | Out-Null
     }
 
+    if ($serviceName -eq "role-service") {
+        Normalize-RoleServiceDbEnv
+    }
+
     $stdOut = ".\logs\$serviceName.log"
     $stdErr = ".\logs\$serviceName.error.log"
 
@@ -342,43 +499,10 @@ if (-not (Get-Command "java.exe" -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-if (-not (Get-Command "mvn.cmd" -ErrorAction SilentlyContinue) -and -not (Get-Command "mvn" -ErrorAction SilentlyContinue)) {
+if (-not $UseJarStartup -and -not (Get-Command "mvn.cmd" -ErrorAction SilentlyContinue) -and -not (Get-Command "mvn" -ErrorAction SilentlyContinue)) {
     Write-ColorOutput "Red" "[-] Maven not found in PATH. Install Maven and try again."
     exit 1
 }
-
-# MongoDB dependency
-Write-ColorOutput "Yellow" "Checking MongoDB on localhost:$MongoPort..."
-if (-not (Test-PortOpen $MongoPort)) {
-    $docker = Get-Command "docker.exe" -ErrorAction SilentlyContinue
-    if ($docker) {
-        Write-ColorOutput "Yellow" "MongoDB not reachable. Attempting to start mongodb container via docker compose..."
-        try {
-            & docker compose up -d mongodb | Out-Null
-            Start-Sleep -Seconds 5
-        } catch {
-            Write-ColorOutput "Red" "[-] Failed to start MongoDB with Docker Compose: $_"
-            exit 1
-        }
-    }
-}
-
-$mongoWaitElapsed = 0
-$mongoReady = $false
-while ($mongoWaitElapsed -lt 30) {
-    if (Test-PortOpen $MongoPort) {
-        $mongoReady = $true
-        break
-    }
-    Start-Sleep -Seconds 2
-    $mongoWaitElapsed += 2
-}
-
-if (-not $mongoReady) {
-    Write-ColorOutput "Red" "[-] MongoDB is not reachable on localhost:$MongoPort. Start MongoDB and retry."
-    exit 1
-}
-Write-ColorOutput "Green" "[+] MongoDB is reachable`n"
 
 # Start services sequentially
 $overallStartupStartTime = Get-Date
@@ -427,6 +551,14 @@ if ($Service) {
     $services = @($serviceDef)
 }
 
+$requiresRoleServiceDb = $services | Where-Object { $_.Name -eq "role-service" } | Select-Object -First 1
+if ($requiresRoleServiceDb) {
+    if (-not (Ensure-PostgresAvailableForRoleService $ShouldAutoStartPostgres)) {
+        Write-ColorOutput "Red" "`n[FAIL] Backend launch stopped because role-service dependency (PostgreSQL) is not ready."
+        exit 1
+    }
+}
+
 foreach ($serviceDef in $services) {
     if ($UseJarStartup) {
         $result = Start-BackendServiceViaJar $serviceDef.Name $serviceDef.Version $serviceDef.JarPath $serviceDef.Port $serviceDef.ReadinessUrl $serviceDef.ExtraArgs
@@ -454,6 +586,17 @@ foreach ($serviceDef in $services) {
 
 $overallStartupSeconds = [Math]::Round((New-TimeSpan -Start $overallStartupStartTime -End (Get-Date)).TotalSeconds, 2)
 
+if (([string]::IsNullOrWhiteSpace($Service)) -and (-not $SkipGlobalHealth)) {
+    Write-ColorOutput "Yellow" "[i] Running post-start backend health validation..."
+    & .\check-backend.ps1
+    if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        Write-ColorOutput "Red" "[-] Post-start backend health validation failed."
+        exit 1
+    }
+} elseif ($SkipGlobalHealth) {
+    Write-ColorOutput "Yellow" "[i] SkipGlobalHealth enabled. Skipping post-start backend health validation."
+}
+
 # Get gateway port for Swagger URL
 $gatewayService = Get-ServiceByShortcut $ServiceMap "gateway"
 $gatewayPort = if ($gatewayService) { $gatewayService.Port } else { 8000 }
@@ -478,6 +621,8 @@ foreach ($status in $serviceStatus) {
 Write-Host ""
 if (-not [string]::IsNullOrWhiteSpace($Service)) {
     Write-ColorOutput "Yellow" "[i] Single-service mode detected ($Service). Skipping Swagger UI auto-open."
+} elseif ($NoBrowser) {
+    Write-ColorOutput "Yellow" "[i] NoBrowser enabled. Skipping Swagger UI auto-open."
 } else {
     Write-ColorOutput "Cyan" "Opening consolidated Swagger UI in Chrome..."
 

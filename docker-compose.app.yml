@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: carousel-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: carousel_roles
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - carousel-network
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+    networks:
+      - carousel-network
+
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+    networks:
+      - carousel-network
+
+  approval-service:
+    build:
+      context: ./backend/approval-service
+      dockerfile: Dockerfile
+    container_name: approval-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres
+    networks:
+      - carousel-network
+
+  role-service:
+    build:
+      context: ./backend/role-service
+      dockerfile: Dockerfile
+    container_name: role-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      CAROUSEL_CLIENTS_USER_SERVICE_URL: http://user-service:8002
+    ports:
+      - "8004:8004"
+    depends_on:
+      - postgres
+      - user-service
+    networks:
+      - carousel-network
+
+  inventory-service:
+    build:
+      context: ./backend/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8005:8005"
+    depends_on:
+      - postgres
+    networks:
+      - carousel-network
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - auth-service
+      - user-service
+      - approval-service
+      - role-service
+      - inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    networks:
+      - carousel-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:8000/api
+    container_name: carousel-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - carousel-network
+
+volumes:
+  postgres_data:
+
+networks:
+  carousel-network:
+    driver: bridge

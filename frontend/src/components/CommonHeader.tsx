@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../redux/authSlice';
 import { AppDispatch, RootState } from '../redux/store';
+import { auditService } from '../services/userService';
 import './CommonHeader.css';
 
 const CommonHeader: React.FC = () => {
@@ -26,7 +27,13 @@ const CommonHeader: React.FC = () => {
     }
   }, [profileMenuOpen]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (email) {
+      try {
+        await auditService.trackLogout(email);
+      } catch {
+      }
+    }
     dispatch(logout());
     navigate('/login');
   };

@@ -1,0 +1,30 @@
+.admin-page-scaffold {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-page-header h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: #1f3b63;
+}
+
+.admin-page-header p {
+  margin: 6px 0 0 0;
+  color: #475569;
+}
+
+.admin-page-note {
+  margin-top: 10px;
+  background: #eef5ff;
+  border: 1px solid #cfe0f7;
+  color: #1f3b63;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.admin-page-content {
+  min-width: 0;
+}

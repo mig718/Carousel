@@ -1,194 +1,198 @@
 package com.carousel.role.service;
 
 import com.carousel.role.client.UserServiceClient;
-import com.carousel.role.config.PredefinedRolesConfig;
 import com.carousel.role.domain.Role;
 import com.carousel.role.domain.UserRoleAssignment;
+import com.carousel.role.dto.RoleAssignmentDto;
 import com.carousel.role.dto.RoleAssignmentRequest;
 import com.carousel.role.dto.RoleDto;
 import com.carousel.role.dto.UserDto;
 import com.carousel.role.repository.RoleRepository;
 import com.carousel.role.repository.UserRoleAssignmentRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class RoleManagementService {
     private final RoleRepository roleRepository;
     private final UserRoleAssignmentRepository assignmentRepository;
     private final UserServiceClient userServiceClient;
-    private final PredefinedRolesConfig predefinedRolesConfig;
 
     public RoleManagementService(
             RoleRepository roleRepository,
             UserRoleAssignmentRepository assignmentRepository,
-            UserServiceClient userServiceClient,
-            PredefinedRolesConfig predefinedRolesConfig
+            UserServiceClient userServiceClient
     ) {
         this.roleRepository = roleRepository;
         this.assignmentRepository = assignmentRepository;
         this.userServiceClient = userServiceClient;
-        this.predefinedRolesConfig = predefinedRolesConfig;
     }
 
-    @PostConstruct
-    public void ensureDefaultRoles() {
-        // Clean up predefined roles from database if they exist
-        // (they should not be in the database anymore)
-        List<String> predefinedNames = predefinedRolesConfig.getPredefined().stream()
-                .map(RoleDto::getName)
-                .toList();
-        
-        predefinedNames.forEach(name -> {
-            if (roleRepository.existsByName(name)) {
-                roleRepository.deleteByName(name);
-            }
-        });
-    }
-
+    @Transactional(readOnly = true)
     public List<RoleDto> getAllRoles() {
-        // Combine predefined roles and custom roles from database
-        List<RoleDto> predefined = new ArrayList<>(predefinedRolesConfig.getPredefined());
-        List<RoleDto> custom = roleRepository.findAll().stream()
-                .sorted(Comparator.comparing(Role::getName))
-                .map(role -> new RoleDto(role.getName(), role.getDescription()))
-                .toList();
-        
-        return Stream.concat(predefined.stream(), custom.stream())
-                .sorted(Comparator.comparing(RoleDto::getName))
-                .toList();
-    }
-
-    public List<RoleDto> getCustomRoles() {
-        // Return only custom roles from database
         return roleRepository.findAll().stream()
                 .sorted(Comparator.comparing(Role::getName))
-                .map(role -> new RoleDto(role.getName(), role.getDescription()))
+                .map(this::toRoleDto)
                 .toList();
     }
 
     public RoleDto createRole(RoleDto request, String requesterEmail) {
         validateAdmin(requesterEmail);
-        
-        // Check if role name conflicts with predefined roles
-        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase(request.getName()));
-        if (isPredefined) {
-            throw new RuntimeException("Cannot create custom role with predefined role name");
-        }
-        
-        if (roleRepository.existsByName(request.getName())) {
+        validateRoleRequest(request);
+
+        if (roleRepository.existsByNameIgnoreCase(request.getName())) {
             throw new RuntimeException("Role already exists");
         }
 
-        Role saved = roleRepository.save(new Role(null, request.getName(), request.getDescription()));
-        return new RoleDto(saved.getName(), saved.getDescription());
+        Role saved = roleRepository.save(new Role(null, request.getName().trim(), request.getDescription().trim(), true));
+        return toRoleDto(saved);
     }
 
-    public RoleDto updateRole(String roleName, RoleDto request, String requesterEmail) {
+    public RoleDto updateRole(String roleId, RoleDto request, String requesterEmail) {
         validateAdmin(requesterEmail);
-        
-        // Check if trying to update a predefined role
-        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
-        if (isPredefined) {
-            throw new RuntimeException("Cannot update predefined role");
-        }
-        
-        Role role = roleRepository.findByName(roleName)
+        validateRoleRequest(request);
+
+        Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
-        role.setDescription(request.getDescription());
+        if (!role.isEditable()) {
+            throw new RuntimeException("Cannot update predefined role");
+        }
+
+        Optional<Role> conflict = roleRepository.findByNameIgnoreCase(request.getName().trim());
+        if (conflict.isPresent() && !conflict.get().getId().equals(roleId)) {
+            throw new RuntimeException("Role name already exists");
+        }
+
+        role.setName(request.getName().trim());
+        role.setDescription(request.getDescription().trim());
         Role saved = roleRepository.save(role);
-        return new RoleDto(saved.getName(), saved.getDescription());
+        return toRoleDto(saved);
     }
 
-    public void deleteRole(String roleName, String requesterEmail) {
+    public void deleteRole(String roleId, String requesterEmail) {
         validateAdmin(requesterEmail);
-        
-        // Check if trying to delete a predefined role
-        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
-        if (isPredefined) {
+
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
+        if (!role.isEditable()) {
             throw new RuntimeException("Cannot delete predefined role");
         }
-        
-        if (!roleRepository.existsByName(roleName)) {
-            throw new RuntimeException("Role not found");
-        }
 
-        roleRepository.deleteByName(roleName);
-        assignmentRepository.findAll().forEach(assignment -> {
-            List<String> roles = new ArrayList<>(assignment.getRoles());
-            if (roles.removeIf(role -> role.equalsIgnoreCase(roleName))) {
-                assignment.setRoles(roles);
-                assignment.setUpdatedAt(LocalDateTime.now());
-                assignmentRepository.save(assignment);
-            }
-        });
+        assignmentRepository.deleteByRoleId(roleId);
+        roleRepository.delete(role);
     }
 
     public void assignRole(RoleAssignmentRequest request, String requesterEmail) {
         validateAdmin(requesterEmail);
-        assignRoleInternal(request.getUserEmail(), request.getRoleName());
+        String resolvedUserId = resolveUserId(request);
+        String resolvedRoleId = resolveRoleId(request);
+        assignRoleInternal(resolvedUserId, resolvedRoleId);
     }
 
-    public void assignRoleInternal(String userEmail, String roleName) {
-        ensureRoleExists(roleName);
-        UserRoleAssignment assignment = assignmentRepository.findByUserEmail(userEmail)
-                .orElse(new UserRoleAssignment(null, userEmail, new ArrayList<>(), LocalDateTime.now()));
+    public void assignRoleInternal(String userId, String roleId) {
+        ensureRoleExistsById(roleId);
+        ensureUserExistsById(userId);
 
-        if (!assignment.getRoles().stream().anyMatch(role -> role.equalsIgnoreCase(roleName))) {
-            assignment.getRoles().add(roleName);
-            assignment.setUpdatedAt(LocalDateTime.now());
+        Optional<UserRoleAssignment> existing = assignmentRepository.findByUserIdAndRoleId(userId, roleId);
+        if (existing.isEmpty()) {
+            UserRoleAssignment assignment = new UserRoleAssignment(null, userId, roleId, LocalDateTime.now());
             assignmentRepository.save(assignment);
         }
     }
 
     public void unassignRole(RoleAssignmentRequest request, String requesterEmail) {
         validateAdmin(requesterEmail);
-        UserRoleAssignment assignment = assignmentRepository.findByUserEmail(request.getUserEmail())
+        String resolvedUserId = resolveUserId(request);
+        String resolvedRoleId = resolveRoleId(request);
+        UserRoleAssignment assignment = assignmentRepository
+            .findByUserIdAndRoleId(resolvedUserId, resolvedRoleId)
                 .orElseThrow(() -> new RuntimeException("User role assignment not found"));
 
-        boolean removed = assignment.getRoles().removeIf(role -> role.equalsIgnoreCase(request.getRoleName()));
-        if (!removed) {
-            throw new RuntimeException("Role is not assigned to user");
-        }
-
-        assignment.setUpdatedAt(LocalDateTime.now());
-        assignmentRepository.save(assignment);
+        assignmentRepository.delete(assignment);
     }
 
+    @Transactional(readOnly = true)
+    public List<RoleAssignmentDto> getAllAssignments(String requesterEmail) {
+        validateAdmin(requesterEmail);
+
+        List<UserDto> users = userServiceClient.getAllUsers(requesterEmail);
+        Map<String, UserDto> userById = users.stream().collect(Collectors.toMap(UserDto::getId, user -> user, (first, second) -> first));
+
+        Map<String, Role> roleById = roleRepository.findAll().stream()
+                .collect(Collectors.toMap(Role::getId, role -> role, (first, second) -> first));
+
+        return assignmentRepository.findAll().stream()
+                .map(assignment -> {
+                    UserDto user = userById.get(assignment.getUserId());
+                    Role role = roleById.get(assignment.getRoleId());
+                    String userName = user == null
+                            ? "Unknown User"
+                            : (safeValue(user.getFirstName()) + " " + safeValue(user.getLastName())).trim();
+                    if (userName.isBlank()) {
+                        userName = user == null ? "Unknown User" : safeValue(user.getEmail());
+                    }
+                    return new RoleAssignmentDto(
+                            assignment.getId(),
+                            assignment.getUserId(),
+                            user == null ? "" : safeValue(user.getEmail()),
+                            userName,
+                            assignment.getRoleId(),
+                            role == null ? "Unknown Role" : role.getName()
+                    );
+                })
+                .sorted(Comparator.comparing(RoleAssignmentDto::getUserEmail).thenComparing(RoleAssignmentDto::getRoleName))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<String> getRolesForUser(String email) {
         boolean isAdmin = false;
+        UserDto user = null;
         try {
-            UserDto user = userServiceClient.getUserByEmail(email);
+            user = userServiceClient.getUserByEmail(email);
             isAdmin = user != null && "Admin".equalsIgnoreCase(user.getAccessLevel());
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
-        UserRoleAssignment assignment = assignmentRepository.findByUserEmail(email)
-                .orElse(null);
+        List<String> assignedRoleNames = new ArrayList<>();
+        if (user != null && user.getId() != null) {
+            List<UserRoleAssignment> assignments = assignmentRepository.findByUserId(user.getId());
+            if (!assignments.isEmpty()) {
+                Map<String, Role> roleById = roleRepository.findAllById(assignments.stream().map(UserRoleAssignment::getRoleId).toList())
+                        .stream()
+                        .collect(Collectors.toMap(Role::getId, role -> role, (first, second) -> first));
+                assignedRoleNames = assignments.stream()
+                        .map(assignment -> roleById.get(assignment.getRoleId()))
+                        .filter(role -> role != null)
+                        .map(Role::getName)
+                        .collect(Collectors.toCollection(ArrayList::new));
+            }
+        }
 
-        if (assignment == null || assignment.getRoles().isEmpty()) {
+        if (assignedRoleNames.isEmpty()) {
             if (isAdmin) {
                 return List.of("ReadOnly", "Support", "InventoryManager");
             }
             return List.of("ReadOnly");
         }
 
-        List<String> resolved = new ArrayList<>(assignment.getRoles());
+        List<String> resolved = new ArrayList<>(assignedRoleNames);
         if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("Support"))) {
-            resolved.add("Support");
+            addRoleIfExists(resolved, "Support");
         }
         if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("InventoryManager"))) {
-            resolved.add("InventoryManager");
+            addRoleIfExists(resolved, "InventoryManager");
         }
 
         return resolved;
@@ -198,14 +202,82 @@ public class RoleManagementService {
         return getRolesForUser(email).stream().anyMatch(role -> role.equalsIgnoreCase(roleName));
     }
 
-    private void ensureRoleExists(String roleName) {
-        // Check both predefined and custom roles
-        boolean isPredefined = predefinedRolesConfig.getPredefined().stream()
-                .anyMatch(role -> role.getName().equalsIgnoreCase(roleName));
-        boolean isCustom = roleRepository.existsByName(roleName);
-        
-        if (!isPredefined && !isCustom) {
+    public void assignDefaultRoleByEmail(String userEmail) {
+        UserDto user = userServiceClient.getUserByEmail(userEmail);
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        Role defaultRole = roleRepository.findByNameIgnoreCase("ReadOnly")
+                .orElseThrow(() -> new RuntimeException("ReadOnly role is not configured"));
+
+        assignRoleInternal(user.getId(), defaultRole.getId());
+    }
+
+    private void validateRoleRequest(RoleDto request) {
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new RuntimeException("Role name is required");
+        }
+
+        if (request.getDescription() == null || request.getDescription().isBlank()) {
+            throw new RuntimeException("Role description is required");
+        }
+    }
+
+    private String resolveUserId(RoleAssignmentRequest request) {
+        if (request.getUserId() != null && !request.getUserId().isBlank()) {
+            return request.getUserId();
+        }
+
+        if (request.getUserEmail() != null && !request.getUserEmail().isBlank()) {
+            UserDto user = userServiceClient.getUserByEmail(request.getUserEmail());
+            if (user != null && user.getId() != null) {
+                return user.getId();
+            }
+        }
+
+        throw new RuntimeException("userId or userEmail is required");
+    }
+
+    private String resolveRoleId(RoleAssignmentRequest request) {
+        if (request.getRoleId() != null && !request.getRoleId().isBlank()) {
+            return request.getRoleId();
+        }
+
+        if (request.getRoleName() != null && !request.getRoleName().isBlank()) {
+            Optional<Role> role = roleRepository.findByNameIgnoreCase(request.getRoleName());
+            if (role.isPresent()) {
+                return role.get().getId();
+            }
+        }
+
+        throw new RuntimeException("roleId or roleName is required");
+    }
+
+    private void ensureRoleExistsById(String roleId) {
+        if (!roleRepository.existsById(roleId)) {
             throw new RuntimeException("Role not found");
+        }
+    }
+
+    private void ensureUserExistsById(String userId) {
+        UserDto user = userServiceClient.getUserById(userId);
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("User not found");
+        }
+    }
+
+    private RoleDto toRoleDto(Role role) {
+        return new RoleDto(role.getId(), role.getName(), role.getDescription(), role.isEditable());
+    }
+
+    private String safeValue(String value) {
+        return value == null ? "" : value;
+    }
+
+    private void addRoleIfExists(List<String> roles, String roleName) {
+        if (roleRepository.findByNameIgnoreCase(roleName).isPresent()) {
+            roles.add(roleName);
         }
     }
 

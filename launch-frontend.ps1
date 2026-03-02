@@ -2,6 +2,8 @@
 # Validates all backend services are running, starts frontend, and opens landing page
 
 param(
+    [switch]$SkipBackendValidation,
+    [switch]$NoBrowser,
     [int]$FrontendPort = 3000,
     [int]$AuthServicePort = 8001,
     [int]$UserServicePort = 8002,
@@ -28,13 +30,25 @@ function Open-FrontendLandingPage($url) {
     }
 }
 
-function Test-PortOpen($port) {
+function Test-TcpPortOpen([string]$hostName = "127.0.0.1", [int]$port, [int]$timeoutMs = 700) {
+    $client = New-Object System.Net.Sockets.TcpClient
     try {
-        $connection = Test-NetConnection -ComputerName "localhost" -Port $port -WarningAction SilentlyContinue
-        return [bool]$connection.TcpTestSucceeded
+        $asyncResult = $client.BeginConnect($hostName, $port, $null, $null)
+        if (-not $asyncResult.AsyncWaitHandle.WaitOne($timeoutMs, $false)) {
+            return $false
+        }
+
+        $client.EndConnect($asyncResult)
+        return $true
     } catch {
         return $false
+    } finally {
+        $client.Close()
     }
+}
+
+function Test-PortOpen($port) {
+    return (Test-TcpPortOpen -port $port)
 }
 
 function Test-HttpReady($url) {
@@ -51,6 +65,11 @@ function Test-HttpReady($url) {
 }
 
 function Test-ServiceHealthy($serviceName, $port, $healthUrl) {
+    if (-not (Test-PortOpen $port)) {
+        Write-ColorOutput "Red" "$CrossMark $serviceName is not responding (port $port closed)"
+        return $false
+    }
+
     try {
         $response = Invoke-WebRequest -Uri $healthUrl -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
         if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
@@ -74,30 +93,35 @@ function Test-ServiceHealthy($serviceName, $port, $healthUrl) {
 Write-ColorOutput "Green" "=== Carousel Frontend Launch Script ==="
 Write-ColorOutput "Cyan" "Starting at $(Get-Date)`n"
 
-# Check all backend services are running
-Write-ColorOutput "Yellow" "Checking backend services..."
+if ($SkipBackendValidation) {
+    Write-ColorOutput "Yellow" "[i] SkipBackendValidation enabled. Skipping backend health checks."
+} else {
+    # Check all backend services are running
+    Write-ColorOutput "Yellow" "Checking backend services..."
 
-$healthChecks = @(
-    @{ Name = "Auth Service"; Port = $AuthServicePort; Url = "http://localhost:$AuthServicePort/api/auth/v3/api-docs" },
-    @{ Name = "User Service"; Port = $UserServicePort; Url = "http://localhost:$UserServicePort/api/users/v3/api-docs" },
-    @{ Name = "Approval Service"; Port = $ApprovalServicePort; Url = "http://localhost:$ApprovalServicePort/api/approvals/v3/api-docs" },
-    @{ Name = "API Gateway"; Port = $ApiGatewayPort; Url = "http://localhost:$ApiGatewayPort/swagger-ui.html" }
-)
+    $healthChecks = @(
+        @{ Name = "Auth Service"; Port = $AuthServicePort; Url = "http://localhost:$AuthServicePort/api/auth/v3/api-docs" },
+        @{ Name = "User Service"; Port = $UserServicePort; Url = "http://localhost:$UserServicePort/api/users/v3/api-docs" },
+        @{ Name = "Approval Service"; Port = $ApprovalServicePort; Url = "http://localhost:$ApprovalServicePort/api/approvals/v3/api-docs" },
+        @{ Name = "API Gateway"; Port = $ApiGatewayPort; Url = "http://localhost:$ApiGatewayPort/swagger-ui.html" }
+    )
 
-$allHealthy = $true
-foreach ($service in $healthChecks) {
-    if (-not (Test-ServiceHealthy $service.Name $service.Port $service.Url)) {
-        $allHealthy = $false
+    $allHealthy = $true
+    foreach ($service in $healthChecks) {
+        if (-not (Test-ServiceHealthy $service.Name $service.Port $service.Url)) {
+            $allHealthy = $false
+        }
     }
-}
 
-if (-not $allHealthy) {
-    Write-ColorOutput "Red" "`n$CrossMark Some backend services are not running."
-    Write-ColorOutput "Yellow" "[i] Start backend services first with: .\launch-backend.ps1 --fast"
-    exit 1
-}
+    if (-not $allHealthy) {
+        Write-ColorOutput "Red" "`n$CrossMark Some backend services are not running."
+        Write-ColorOutput "Yellow" "[i] Start backend services first with: .\launch-backend.ps1 --fast"
+        Write-ColorOutput "Yellow" "[i] Or bypass checks for UI-only work: .\launch-frontend.ps1 -SkipBackendValidation"
+        exit 1
+    }
 
-Write-ColorOutput "Green" "$CheckMark All backend services are running`n"
+    Write-ColorOutput "Green" "$CheckMark All backend services are running`n"
+}
 
 # Check Node.js is available
 if (-not (Get-Command "node.exe" -ErrorAction SilentlyContinue)) {
@@ -132,7 +156,11 @@ $frontendUrl = "http://localhost:$FrontendPort/"
 $portInUse = Test-PortOpen $FrontendPort
 if ($portInUse -and (Test-HttpReady $frontendUrl)) {
     Write-ColorOutput "Yellow" "[SKIP] Frontend was already running and ready on port $FrontendPort. Skipping launch."
-    Open-FrontendLandingPage $frontendUrl
+    if ($NoBrowser) {
+        Write-ColorOutput "Yellow" "[i] NoBrowser enabled. Skipping browser launch."
+    } else {
+        Open-FrontendLandingPage $frontendUrl
+    }
     Write-ColorOutput "Green" "[+] Frontend is running"
     Write-ColorOutput "Green" "[+] Landing page: $frontendUrl"
     Write-ColorOutput "Yellow" "Log: .\logs\frontend.log"
@@ -199,7 +227,11 @@ Write-ColorOutput "Green" "[+] Frontend is ready (Port $FrontendPort)"
 Write-ColorOutput "Green" "[OK] Frontend start completed successfully.`n"
 
 # Open landing page in Chrome
-Open-FrontendLandingPage $frontendUrl
+if ($NoBrowser) {
+    Write-ColorOutput "Yellow" "[i] NoBrowser enabled. Skipping browser launch."
+} else {
+    Open-FrontendLandingPage $frontendUrl
+}
 
 Write-ColorOutput "Green" "[+] Frontend is running"
 Write-ColorOutput "Green" "[+] Landing page: $frontendUrl"

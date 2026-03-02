@@ -2,7 +2,9 @@
 
 This guide explains how to deploy the Carousel application to various environments.
 
-## Local Development with Docker Compose
+For interview/quick-reference CI/CD context, see [docs/reference/CI_CD_BASICS_STUDY_GUIDE.md](../reference/CI_CD_BASICS_STUDY_GUIDE.md).
+
+## Local Deployment (Recommended)
 
 ### Prerequisites
 - Docker
@@ -10,40 +12,33 @@ This guide explains how to deploy the Carousel application to various environmen
 
 ### Steps
 
-1. Build the backend services:
+1. Start the full deployable stack:
 ```bash
-cd backend
-
-# Auth Service
-cd auth-service && mvn clean package -DskipTests && cd ..
-
-# User Service
-cd user-service && mvn clean package -DskipTests && cd ..
-
-# Approval Service
-cd approval-service && mvn clean package -DskipTests && cd ..
-
-# API Gateway
-cd api-gateway && mvn clean package -DskipTests && cd ..
-
-cd ..
+npm run compose:app:up
 ```
 
-2. Start all services:
+2. Stop the full stack:
 ```bash
-docker-compose up
+npm run compose:app:down
 ```
 
-3. Build and run frontend:
+### Debug Profile (DBs only)
+
+Use this when you want to run backend/frontend from local scripts but keep PostgreSQL in containers:
+
 ```bash
-cd frontend
-npm install
-npm start
+npm run dev:up
+# run local services with npm run backend / npm run frontend
+npm run dev:down
 ```
 
 Services will be available at:
 - API Gateway: http://localhost:8000
 - Frontend: http://localhost:3000
+
+Compose files:
+- `docker-compose.app.yml`: full deployable package
+- `docker-compose.debug.yml`: debug data stack (PostgreSQL)
 
 ## Docker Image Build
 
@@ -104,7 +99,9 @@ kind: ConfigMap
 metadata:
   name: carousel-config
 data:
-  MONGODB_URI: "mongodb://mongodb:27017/carousel"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/carousel_roles"
+  SPRING_DATASOURCE_USERNAME: "postgres"
+  SPRING_DATASOURCE_PASSWORD: "postgres"
 
 ---
 apiVersion: apps/v1
@@ -127,11 +124,21 @@ spec:
         ports:
         - containerPort: 8000
         env:
-        - name: SPRING_DATA_MONGODB_URI
+        - name: SPRING_DATASOURCE_URL
           valueFrom:
             configMapKeyRef:
               name: carousel-config
-              key: MONGODB_URI
+              key: SPRING_DATASOURCE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: carousel-config
+              key: SPRING_DATASOURCE_USERNAME
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: carousel-config
+              key: SPRING_DATASOURCE_PASSWORD
 
 ---
 apiVersion: v1
@@ -160,8 +167,10 @@ kubectl apply -f k8s-deployment.yaml -n carousel
 Required environment variables for each service:
 
 ```bash
-# MongoDB Connection
-SPRING_DATA_MONGODB_URI=mongodb://username:password@host:port/database
+# PostgreSQL Connection
+SPRING_DATASOURCE_URL=jdbc:postgresql://host:5432/carousel_roles
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=postgres
 
 # Server Port
 SERVER_PORT=8001
@@ -223,7 +232,7 @@ server {
 
 ### Database Scaling
 
-- Implement MongoDB sharding for horizontal scaling
+- Use PostgreSQL read replicas/partitioning for horizontal scaling
 - Set up replication for high availability
 - Monitor database performance and index optimization
 
@@ -261,11 +270,11 @@ Configure centralized logging:
 ### Database Backups
 
 ```bash
-# MongoDB backup
-mongodump --uri "mongodb://username:password@host:port/database" --out ./backup
+# PostgreSQL backup
+pg_dump -h host -U username -d database_name > backup.sql
 
-# MongoDB restore
-mongorestore --uri "mongodb://username:password@host:port/database" ./backup
+# PostgreSQL restore
+psql -h host -U username -d database_name -f backup.sql
 ```
 
 ### Application Backups

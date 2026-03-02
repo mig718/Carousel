@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { loginAsync } from '../redux/authSlice';
 import { AppDispatch, RootState } from '../redux/store';
 import './LoginPage.css';
@@ -11,13 +11,17 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, error } = useSelector((state: RootState) => state.auth);
+
+  const redirectParam = new URLSearchParams(location.search).get('redirect');
+  const redirectTarget = redirectParam && redirectParam.startsWith('/') ? redirectParam : '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await dispatch(loginAsync({ email, password })).unwrap();
-      navigate('/dashboard');
+      navigate(redirectTarget, { replace: true });
     } catch (err) {
       console.error('Login failed:', err);
     }

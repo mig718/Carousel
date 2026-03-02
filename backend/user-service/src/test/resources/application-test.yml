@@ -1,9 +1,17 @@
 ﻿spring:
   application:
     name: user-service
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/carousel_user_test
+  datasource:
+    url: jdbc:postgresql://localhost:5432/carousel_roles
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 server:
   port: 8002

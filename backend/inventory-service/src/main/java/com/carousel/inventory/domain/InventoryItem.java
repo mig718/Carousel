@@ -1,36 +1,51 @@
 package com.carousel.inventory.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "inventory_items")
+@Entity
+@Table(name = "inventory_items")
 public class InventoryItem {
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
-    private String name;
-    private String description;
-    private String resourceTypeId;
-    private String resourceTypeName;
-    private String resourceSubTypeId;
-    private String resourceSubTypeName;
+    private String resourceId;
+    private String resourceCategory;
+    private String resourceType;
+    private String resourceSubType;
+    private String resourceTags;
+    private String resourceIcon;
+    private String resourceDescription;
+    private String customTagIds;
     private int availableQuantity;
+    private int pendingQuantity;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     public InventoryItem() {
     }
 
-    public InventoryItem(String id, String name, String description, String resourceTypeId, String resourceTypeName, String resourceSubTypeId, String resourceSubTypeName, int availableQuantity, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public InventoryItem(String id, String resourceId, String resourceCategory, String resourceType, String resourceSubType, String resourceTags, String resourceIcon, String resourceDescription, String customTagIds, int availableQuantity, int pendingQuantity, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
-        this.name = name;
-        this.description = description;
-        this.resourceTypeId = resourceTypeId;
-        this.resourceTypeName = resourceTypeName;
-        this.resourceSubTypeId = resourceSubTypeId;
-        this.resourceSubTypeName = resourceSubTypeName;
+        this.resourceId = resourceId;
+        this.resourceCategory = resourceCategory;
+        this.resourceType = resourceType;
+        this.resourceSubType = resourceSubType;
+        this.resourceTags = resourceTags;
+        this.resourceIcon = resourceIcon;
+        this.resourceDescription = resourceDescription;
+        this.customTagIds = customTagIds;
         this.availableQuantity = availableQuantity;
+        this.pendingQuantity = pendingQuantity;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -43,52 +58,68 @@ public class InventoryItem {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
-    public String getDescription() {
-        return description;
+    public String getResourceCategory() {
+        return resourceCategory;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setResourceCategory(String resourceCategory) {
+        this.resourceCategory = resourceCategory;
     }
 
-    public String getResourceTypeId() {
-        return resourceTypeId;
+    public String getResourceType() {
+        return resourceType;
     }
 
-    public void setResourceTypeId(String resourceTypeId) {
-        this.resourceTypeId = resourceTypeId;
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
     }
 
-    public String getResourceTypeName() {
-        return resourceTypeName;
+    public String getResourceSubType() {
+        return resourceSubType;
     }
 
-    public void setResourceTypeName(String resourceTypeName) {
-        this.resourceTypeName = resourceTypeName;
+    public void setResourceSubType(String resourceSubType) {
+        this.resourceSubType = resourceSubType;
     }
 
-    public String getResourceSubTypeId() {
-        return resourceSubTypeId;
+    public String getResourceTags() {
+        return resourceTags;
     }
 
-    public void setResourceSubTypeId(String resourceSubTypeId) {
-        this.resourceSubTypeId = resourceSubTypeId;
+    public void setResourceTags(String resourceTags) {
+        this.resourceTags = resourceTags;
     }
 
-    public String getResourceSubTypeName() {
-        return resourceSubTypeName;
+    public String getResourceIcon() {
+        return resourceIcon;
     }
 
-    public void setResourceSubTypeName(String resourceSubTypeName) {
-        this.resourceSubTypeName = resourceSubTypeName;
+    public void setResourceIcon(String resourceIcon) {
+        this.resourceIcon = resourceIcon;
+    }
+
+    public String getResourceDescription() {
+        return resourceDescription;
+    }
+
+    public void setResourceDescription(String resourceDescription) {
+        this.resourceDescription = resourceDescription;
+    }
+
+    public String getCustomTagIds() {
+        return customTagIds;
+    }
+
+    public void setCustomTagIds(String customTagIds) {
+        this.customTagIds = customTagIds;
     }
 
     public int getAvailableQuantity() {
@@ -97,6 +128,14 @@ public class InventoryItem {
 
     public void setAvailableQuantity(int availableQuantity) {
         this.availableQuantity = availableQuantity;
+    }
+
+    public int getPendingQuantity() {
+        return pendingQuantity;
+    }
+
+    public void setPendingQuantity(int pendingQuantity) {
+        this.pendingQuantity = pendingQuantity;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -113,5 +152,23 @@ public class InventoryItem {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

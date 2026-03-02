@@ -1,0 +1,161 @@
+.inventory-create-page {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.inventory-create-header h1 {
+  margin: 8px 0 4px;
+  color: #1f3b63;
+}
+
+.inventory-create-header p {
+  margin: 0;
+  color: #475569;
+}
+
+.inventory-back-link {
+  border: none;
+  background: transparent;
+  color: #3867d6;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.inventory-create-warning,
+.inventory-create-error {
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.inventory-create-warning {
+  background: #fff4d8;
+  color: #8a5a00;
+  border: 1px solid #ffd489;
+}
+
+.inventory-create-error {
+  background: #ffe7e7;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+}
+
+.inventory-create-form {
+  background: linear-gradient(160deg, #ffffff, #f4f8ff);
+  border: 1px solid #dde7fb;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 24px rgba(21, 54, 122, 0.08);
+}
+
+.inventory-create-tags label,
+.inventory-create-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.inventory-tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inventory-tag-chip {
+  border: 1px solid #c6d6ff;
+  background: #f5f8ff;
+  color: #22437d;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.inventory-tag-chip.selected {
+  background: #3d6df2;
+  border-color: #3d6df2;
+  color: #ffffff;
+}
+
+.inventory-create-preview {
+  background: #edf3ff;
+  border: 1px solid #c9d9ff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inventory-create-preview span {
+  color: #64748b;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.inventory-create-preview strong {
+  color: #1f3b63;
+}
+
+.inventory-create-field textarea,
+.inventory-create-field input {
+  width: 100%;
+  border: 1px solid #cfd8ea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.inventory-create-qty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inventory-create-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inventory-create-submit,
+.inventory-create-cancel {
+  min-height: 46px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inventory-create-submit {
+  background: linear-gradient(135deg, #5f86ff, #4369f2);
+  color: #fff;
+}
+
+.inventory-create-cancel {
+  background: #f2f4f8;
+  border-color: #d5d9e2;
+  color: #334155;
+}
+
+.inventory-create-loading {
+  color: #475569;
+}
+
+@media (max-width: 900px) {
+  .inventory-create-qty-grid,
+  .inventory-create-actions {
+    grid-template-columns: 1fr;
+  }
+}

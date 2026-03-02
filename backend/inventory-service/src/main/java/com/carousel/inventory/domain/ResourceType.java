@@ -1,32 +1,43 @@
 package com.carousel.inventory.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "resource_types")
+@Entity
+@Table(name = "inventory_resource_types")
 public class ResourceType {
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
     private String name;
     private String description;
     private String icon;
     private String parentTypeId;
     private String parentTypeName;
+    private boolean editable = true;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     public ResourceType() {
     }
 
-    public ResourceType(String id, String name, String description, String icon, String parentTypeId, String parentTypeName, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public ResourceType(String id, String name, String description, String icon, String parentTypeId, String parentTypeName, boolean editable, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.icon = icon;
         this.parentTypeId = parentTypeId;
         this.parentTypeName = parentTypeName;
+        this.editable = editable;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -79,6 +90,14 @@ public class ResourceType {
         this.parentTypeName = parentTypeName;
     }
 
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -93,5 +112,23 @@ public class ResourceType {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

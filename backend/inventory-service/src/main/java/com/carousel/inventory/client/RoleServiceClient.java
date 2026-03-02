@@ -6,7 +6,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "role-service", path = "/api/roles")
+@FeignClient(
+    name = "role-service",
+    url = "${carousel.clients.role-service-url:http://localhost:8004}",
+    path = "/api/roles"
+)
 public interface RoleServiceClient {
     @GetMapping("/user/{email}")
     List<String> getRolesForUser(@PathVariable String email);

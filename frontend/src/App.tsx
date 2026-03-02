@@ -1,7 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './redux/store';
+import { AppDispatch } from './redux/store';
+import { initializeAuthAsync } from './redux/authSlice';
 
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -14,6 +16,8 @@ import UsersPage from './pages/UsersPage';
 import RolesPage from './pages/RolesPage';
 import HomePage from './pages/HomePage';
 import InventoryPage from './pages/InventoryPage';
+import InventoryItemDetailsPage from './pages/InventoryItemDetailsPage';
+import InventoryCreateResourcePage from './pages/InventoryCreateResourcePage';
 import SearchPage from './pages/SearchPage';
 import NotImplementedPage from './pages/NotImplementedPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -21,24 +25,39 @@ import SettingsDashboard from './pages/SettingsDashboard';
 import SettingsUsersPage from './pages/SettingsUsersPage';
 import SettingsInventoryPage from './pages/SettingsInventoryPage';
 import AdminAddUserPage from './pages/AdminAddUserPage';
-import AdminRolesPage from './pages/AdminRolesPage';
 import AdminAddRolePage from './pages/AdminAddRolePage';
 import AdminAddRoleAssignmentPage from './pages/AdminAddRoleAssignmentPage';
 import ProtectedLayout from './components/ProtectedLayout';
+import AdminOnlyRoute from './components/AdminOnlyRoute';
+import AdminPageScaffold from './components/AdminPageScaffold';
+import { adminResourceRegistry } from './admin/adminResourceRegistry';
 
 import './App.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+  const initialized = useSelector((state: RootState) => state.auth.initialized);
+
+  if (!initialized) {
+    return null;
   }
-  
+
+  if (!isAuthenticated) {
+    const redirectTo = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTo)}`} replace />;
+  }
+
   return <>{children}</>;
 };
 
 const App: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+
+  React.useEffect(() => {
+    dispatch(initializeAuthAsync());
+  }, [dispatch]);
+
   return (
     <Router>
       <Routes>
@@ -118,41 +137,73 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/admin"
+          path="/inventory/dashboard/:resourceTypeName"
           element={
             <ProtectedRoute>
               <ProtectedLayout>
-                <AdminDashboard />
+                <InventoryPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin/users"
+          path="/inventory/new"
           element={
             <ProtectedRoute>
               <ProtectedLayout>
-                <UsersPage />
+                <InventoryCreateResourcePage />
               </ProtectedLayout>
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/inventory/items/:itemId"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <InventoryItemDetailsPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <AdminOnlyRoute>
+                  <AdminDashboard />
+                </AdminOnlyRoute>
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        {adminResourceRegistry.map((resource) => {
+          const ResourceComponent = resource.component;
+          return (
+            <Route
+              key={resource.id}
+              path={`/admin/${resource.id}`}
+              element={
+                <ProtectedRoute>
+                  <ProtectedLayout>
+                    <AdminOnlyRoute>
+                      <AdminPageScaffold title={resource.title} description={resource.description}>
+                        <ResourceComponent />
+                      </AdminPageScaffold>
+                    </AdminOnlyRoute>
+                  </ProtectedLayout>
+                </ProtectedRoute>
+              }
+            />
+          );
+        })}
         <Route
           path="/admin/users/new"
           element={
             <ProtectedRoute>
               <ProtectedLayout>
                 <AdminAddUserPage />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/roles"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <AdminRolesPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }
@@ -173,16 +224,6 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <ProtectedLayout>
                 <AdminAddRoleAssignmentPage />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/inventory"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <InventoryPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }

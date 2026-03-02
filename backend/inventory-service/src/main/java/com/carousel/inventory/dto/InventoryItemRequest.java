@@ -1,42 +1,19 @@
 package com.carousel.inventory.dto;
 
+import java.util.List;
+
 public class InventoryItemRequest {
-    private String name;
-    private String description;
-    private String resourceTypeId;
-    private String resourceSubTypeId;
+    private String resourceId;
     private Integer availableQuantity;
+    private Integer pendingQuantity;
+    private List<String> customTagIds;
 
-    public String getName() {
-        return name;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getResourceTypeId() {
-        return resourceTypeId;
-    }
-
-    public void setResourceTypeId(String resourceTypeId) {
-        this.resourceTypeId = resourceTypeId;
-    }
-
-    public String getResourceSubTypeId() {
-        return resourceSubTypeId;
-    }
-
-    public void setResourceSubTypeId(String resourceSubTypeId) {
-        this.resourceSubTypeId = resourceSubTypeId;
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
     public Integer getAvailableQuantity() {
@@ -45,5 +22,21 @@ public class InventoryItemRequest {
 
     public void setAvailableQuantity(Integer availableQuantity) {
         this.availableQuantity = availableQuantity;
+    }
+
+    public Integer getPendingQuantity() {
+        return pendingQuantity;
+    }
+
+    public void setPendingQuantity(Integer pendingQuantity) {
+        this.pendingQuantity = pendingQuantity;
+    }
+
+    public List<String> getCustomTagIds() {
+        return customTagIds;
+    }
+
+    public void setCustomTagIds(List<String> customTagIds) {
+        this.customTagIds = customTagIds;
     }
 }

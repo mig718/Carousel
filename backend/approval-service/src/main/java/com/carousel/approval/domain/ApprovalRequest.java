@@ -1,16 +1,24 @@
 package com.carousel.approval.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "approvals")
+@Entity
+@Table(name = "approval_requests")
 public class ApprovalRequest {
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
     private String pendingUserId;
     private String targetUserId;
+    @Column(nullable = false)
     private String email;
     private String firstName;
     private String lastName;
@@ -18,6 +26,7 @@ public class ApprovalRequest {
     private String requestType;
     private boolean approved;
     private String approvedBy;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
     private LocalDateTime approvedAt;
 
@@ -96,6 +105,23 @@ public class ApprovalRequest {
 
         public ApprovalRequest build() {
             return new ApprovalRequest(id, pendingUserId, targetUserId, email, firstName, lastName, requestedAccessLevel, requestType, approved, approvedBy, createdAt, approvedAt);
+        }
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        if (approved && approvedAt == null) {
+            approvedAt = LocalDateTime.now();
         }
     }
 }

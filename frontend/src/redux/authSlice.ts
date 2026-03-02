@@ -4,6 +4,7 @@ import { authService } from '../services/userService';
 
 interface AuthState {
   isAuthenticated: boolean;
+  initialized: boolean;
   user: User | null;
   token: string | null;
   email: string | null;
@@ -12,13 +13,38 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: false,
+  initialized: false,
   user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
-  token: localStorage.getItem('token'),
-  email: localStorage.getItem('email'),
+  token: null,
+  email: null,
   loading: false,
   error: null,
 };
+
+export const initializeAuthAsync = createAsyncThunk(
+  'auth/initialize',
+  async (_, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+    const email = localStorage.getItem('email');
+
+    if (!token || !email) {
+      return { authenticated: false as const };
+    }
+
+    // Restore the session from localStorage without validating
+    // Individual API calls will validate the token and log out if invalid
+    const rawUser = localStorage.getItem('user');
+    const user = rawUser ? JSON.parse(rawUser) : null;
+
+    return {
+      authenticated: true as const,
+      token,
+      email,
+      user,
+    };
+  }
+);
 
 export const loginAsync = createAsyncThunk(
   'auth/login',
@@ -28,7 +54,6 @@ export const loginAsync = createAsyncThunk(
       const response = await authService.login({ email, password });
       console.log('Login successful:', response);
       localStorage.setItem('token', response.token);
-      localStorage.setItem('sessionToken', response.sessionToken);
       localStorage.setItem('userId', response.userId);
       localStorage.setItem('email', response.email);
       return response;
@@ -48,6 +73,7 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       state.isAuthenticated = false;
+      state.initialized = true;
       state.user = null;
       state.token = null;
       state.email = null;
@@ -70,6 +96,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.fulfilled, (state, action) => {
         state.loading = false;
+        state.initialized = true;
         state.isAuthenticated = true;
         state.token = action.payload.token;
         state.email = action.payload.email;
@@ -77,7 +104,27 @@ const authSlice = createSlice({
       })
       .addCase(loginAsync.rejected, (state, action) => {
         state.loading = false;
+        state.initialized = true;
         state.error = action.payload as string;
+      })
+      .addCase(initializeAuthAsync.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(initializeAuthAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.initialized = true;
+        state.isAuthenticated = action.payload.authenticated;
+        state.token = action.payload.authenticated ? action.payload.token : null;
+        state.email = action.payload.authenticated ? action.payload.email : null;
+        state.user = action.payload.authenticated ? action.payload.user : null;
+      })
+      .addCase(initializeAuthAsync.rejected, (state) => {
+        state.loading = false;
+        state.initialized = true;
+        state.isAuthenticated = false;
+        state.token = null;
+        state.email = null;
+        state.user = null;
       });
   },
 });

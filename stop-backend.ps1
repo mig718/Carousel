@@ -61,4 +61,5 @@ if (-not $uniqueStopped) {
 }
 
 Write-ColorOutput "Green" "Carousel backend stop completed."
+exit 0
 

@@ -1,9 +1,11 @@
 ﻿spring:
   application:
     name: auth-service
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/carousel_auth
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carousel_roles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
   mail:
     host: localhost
     port: 1025
@@ -11,7 +13,11 @@
     password: admin
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
 server:
   port: 8001
@@ -45,4 +51,7 @@ springdoc:
 session:
   jwt:
     expiration: 1800000
+
+jwt:
+  expiration: 1800000
 

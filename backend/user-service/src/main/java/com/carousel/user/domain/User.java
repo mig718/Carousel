@@ -1,11 +1,19 @@
 package com.carousel.user.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "users")
+@Entity
+@Table(name = "app_users")
 public class User {
         private String password;
 
@@ -16,14 +24,19 @@ public class User {
             this.password = password;
         }
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
     private String firstName;
     private String lastName;
+    @Column(nullable = false, unique = true)
     private String email;
+    @Enumerated(EnumType.STRING)
     private AccessLevel accessLevel;
     private boolean emailVerified;
     private String emailVerificationToken;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     public User() {}
@@ -175,6 +188,24 @@ public class User {
         public User build() {
             return new User(id, firstName, lastName, email, accessLevel, emailVerified, emailVerificationToken, createdAt, updatedAt);
         }
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
 
