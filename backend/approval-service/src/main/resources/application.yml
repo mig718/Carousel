@@ -1,9 +1,18 @@
 ﻿spring:
   application:
     name: approval-service
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/carousel_approval
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carousel_roles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   mail:
     host: localhost
     port: 1025

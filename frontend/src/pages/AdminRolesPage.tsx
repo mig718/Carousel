@@ -1,62 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import DataTable, { CellRenderContext, DataTableHandle } from '../components/DataTable';
 import { roleService, userService } from '../services/userService';
-import { Role } from '../types';
-import DataTable from '../components/DataTable';
+import { Role, RoleAssignment, User } from '../types';
 import './AdminRolesPage.css';
 
-interface RoleAssignment {
-  id: string;
-  userEmail: string;
-  userName: string;
-  roleName: string;
-}
-
-interface EditableTextCellProps {
-  value: string;
-  originalValue: string;
-  placeholder?: string;
-  onCommit: (nextValue: string) => void;
-}
-
-const EditableTextCell: React.FC<EditableTextCellProps> = ({
-  value,
-  originalValue,
-  placeholder,
-  onCommit,
-}) => {
-  const [draftValue, setDraftValue] = useState(value ?? '');
-
-  useEffect(() => {
-    setDraftValue(value ?? '');
-  }, [value]);
-
-  const isDirty = value !== originalValue;
-
-  return (
-    <div className={`editable-control ${isDirty ? 'is-dirty' : ''}`}>
-      <input
-        type="text"
-        value={draftValue}
-        onChange={(e) => setDraftValue(e.target.value)}
-        onBlur={() => onCommit(draftValue)}
-        placeholder={placeholder}
-      />
-      <span className="control-check" aria-hidden="true">
-        ✓
-      </span>
-    </div>
-  );
-};
-
 const AdminRolesPage: React.FC = () => {
-  const navigate = useNavigate();
   const requesterEmail = localStorage.getItem('email') || '';
+  const rolesTableRef = useRef<DataTableHandle>(null);
+  const assignmentsTableRef = useRef<DataTableHandle>(null);
 
-  const [customRoles, setCustomRoles] = useState<Role[]>([]); // Only custom roles
+  const [roles, setRoles] = useState<Role[]>([]);
   const [assignments, setAssignments] = useState<RoleAssignment[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -71,50 +30,19 @@ const AdminRolesPage: React.FC = () => {
           return;
         }
 
-        // Load custom roles (for table display)
-        try {
-          const customRolesData = await roleService.getCustomRoles();
-          console.log('Loaded custom roles:', customRolesData || []);
-          setCustomRoles(customRolesData || []);
-        } catch (err) {
-          console.warn('Failed to load custom roles:', err);
-          setCustomRoles([]);
-        }
+        const [roleData, assignmentData, userData] = await Promise.all([
+          roleService.getRoles(),
+          roleService.getAssignments(requesterEmail),
+          userService.getAllUsers(requesterEmail),
+        ]);
 
-        // Load all users and role assignments
-        try {
-          const usersData = await userService.getAllUsers(requesterEmail);
-          console.log('Loaded users:', usersData?.length || 0);
-
-          // Load role assignments for all users
-          const assignmentsData: RoleAssignment[] = [];
-          for (const user of usersData || []) {
-            try {
-              const userRoles = await roleService.getRolesForUser(user.email);
-              userRoles.forEach((roleName) => {
-                assignmentsData.push({
-                  id: `${user.email}:${roleName}`,
-                  userEmail: user.email,
-                  userName: `${user.firstName} ${user.lastName}`,
-                  roleName,
-                });
-              });
-            } catch (err) {
-              console.warn(`Failed to load roles for ${user.email}:`, err);
-            }
-          }
-          console.log('Loaded role assignments:', assignmentsData.length);
-          setAssignments(assignmentsData);
-        } catch (err) {
-          console.warn('Failed to load users:', err);
-          setAssignments([]);
-        }
-
-        setError(null);
+        setRoles(roleData || []);
+        setAssignments(assignmentData || []);
+        setUsers(userData || []);
+        setLoadError(null);
       } catch (err: any) {
-        console.error('Failed to authenticate or check admin access:', err);
-        const errorMessage = err.response?.data?.message || err.message || 'Authentication failed';
-        setError(errorMessage);
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to load roles page';
+        setLoadError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -127,36 +55,121 @@ const AdminRolesPage: React.FC = () => {
     }
   }, [requesterEmail]);
 
-  const handleRoleUpdate = async (roleName: string, updates: Partial<Role>) => {
+  const userOptions = useMemo(
+    () => users.map((u) => ({ id: u.id, label: `${u.firstName} ${u.lastName} <${u.email}>`, name: `${u.firstName} ${u.lastName}`.trim(), email: u.email })),
+    [users]
+  );
+
+  const roleOptions = useMemo(
+    () => roles.map((r) => ({ id: r.id || '', label: r.name })),
+    [roles]
+  );
+
+  const findUserByLabel = (label: string) => userOptions.find((option) => option.label === label);
+  const findRoleByLabel = (label: string) => roleOptions.find((option) => option.label === label);
+
+  const getDisplayUserName = (assignment: any): string => {
+    const matchingUser = users.find((user) => user.id === assignment.userId);
+    if (matchingUser) {
+      return `${matchingUser.firstName || ''} ${matchingUser.lastName || ''}`.trim() || matchingUser.email || '';
+    }
+
+    const rawName = (assignment.userName || '').toString();
+    const cleanedName = rawName.replace(/\s*<[^>]+>\s*$/, '').trim();
+    if (cleanedName) {
+      return cleanedName;
+    }
+
+    return assignment.userEmail || '';
+  };
+
+  const handleRoleUpdate = async (roleId: string, updates: Partial<Role>) => {
     try {
-      const existingRole = customRoles.find((role) => role.name === roleName);
+      const existingRole = roles.find((role) => role.id === roleId);
       if (!existingRole) {
         throw new Error('Role not found');
       }
+      if (!existingRole.editable) {
+        throw new Error('Predefined roles cannot be edited');
+      }
 
-      const updated = await roleService.updateRole(requesterEmail, roleName, {
+      const updated = await roleService.updateRole(requesterEmail, roleId, {
         name: updates.name ?? existingRole.name,
         description: updates.description ?? existingRole.description,
       });
-      setCustomRoles((prev) => prev.map((role) => (role.name === roleName ? updated : role)));
-      setError(null);
+      setRoles((prev) => prev.map((role) => (role.id === roleId ? updated : role)));
+      setActionError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update role');
+      setActionError(err.response?.data?.message || err.message || 'Failed to update role');
       throw err;
     }
   };
 
-  const handleRoleDelete = async (roleName: string) => {
-    if (!window.confirm(`Are you sure you want to delete the role "${roleName}"?`)) {
+  const handleRoleDelete = async (roleId: string) => {
+    const role = roles.find((r) => r.id === roleId);
+    if (!role || !role.editable) {
+      setActionError('Predefined roles cannot be deleted');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
       return;
     }
 
     try {
-      await roleService.deleteRole(requesterEmail, roleName);
-      setCustomRoles((prev) => prev.filter((role) => role.name !== roleName));
-      setError(null);
+      await roleService.deleteRole(requesterEmail, roleId);
+      setRoles((prev) => prev.filter((r) => r.id !== roleId));
+      setAssignments((prev) => prev.filter((a) => a.roleId !== roleId));
+      setActionError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete role');
+      setActionError(err.response?.data?.message || 'Failed to delete role');
+    }
+  };
+
+  const handleRoleCreate = async (data: any) => {
+    try {
+      const created = await roleService.createRole(requesterEmail, {
+        name: data.name || '',
+        description: data.description || '',
+      });
+      setRoles((prev) => [...prev, created]);
+      setActionError(null);
+      return created.id || created.name;
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || err.message || 'Failed to create role');
+      throw err;
+    }
+  };
+
+  const handleAssignmentCreate = async (data: any) => {
+    try {
+      if (!data.userId || !data.roleId) {
+        throw new Error('Please select a valid user and role');
+      }
+
+      await roleService.assignRole(requesterEmail, {
+        userId: data.userId,
+        roleId: data.roleId,
+      });
+
+      const role = roles.find((r) => r.id === data.roleId);
+      const user = users.find((u) => u.id === data.userId);
+
+      const newAssignment: RoleAssignment = {
+        id: `${data.userId}:${data.roleId}`,
+        userId: data.userId,
+        userEmail: user?.email || '',
+        userName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || '',
+        roleId: data.roleId,
+        roleName: role?.name || '',
+      };
+
+      setAssignments((prev) => [...prev, newAssignment]);
+      setActionError(null);
+      return newAssignment.id;
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || err.message || 'Failed to create role assignment');
+      throw err;
     }
   };
 
@@ -172,13 +185,13 @@ const AdminRolesPage: React.FC = () => {
 
     try {
       await roleService.unassignRole(requesterEmail, {
-        userEmail: assignment.userEmail,
-        roleName: assignment.roleName,
+        userId: assignment.userId,
+        roleId: assignment.roleId,
       });
       setAssignments((prev) => prev.filter((a) => a.id !== assignmentId));
-      setError(null);
+      setActionError(null);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to remove role assignment');
+      setActionError(err.response?.data?.message || 'Failed to remove role assignment');
     }
   };
 
@@ -186,45 +199,90 @@ const AdminRolesPage: React.FC = () => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const customRolesWithId = customRoles.map((role) => ({ ...role, id: role.name }));
-  const assignmentsWithId = assignments;
+  const roleRows = roles.map((role) => ({ ...role, id: role.id || role.name }));
 
   const roleColumns = [
     {
       key: 'name',
       label: 'Role Name',
+      required: true,
       render: (
         value: string,
         row: Role,
         onCommit: (field: string, value: string, originalValue: string) => void,
         isModified: boolean,
-        originalValue: string
-      ) => (
-        <EditableTextCell
-          value={value || ''}
-          originalValue={originalValue || ''}
-          placeholder="Role name"
-          onCommit={(nextValue) => onCommit('name', nextValue, originalValue || '')}
-        />
-      ),
+        originalValue: string,
+        context: CellRenderContext
+      ) => {
+        const isNewRow = String(row.id || '').startsWith('__NEW_');
+        const isEditable = isNewRow || !!row.editable;
+
+        if (!isEditable) {
+          return <span className="read-only-field">{value}</span>;
+        }
+
+        if (!context.isEditing) {
+          return (
+            <button type="button" className="role-inline-read" onClick={context.beginEdit}>
+              {value || 'Enter role name'}
+            </button>
+          );
+        }
+
+        return (
+          <input
+            autoFocus
+            className="assignment-inline-input"
+            value={value || ''}
+            onChange={(e) => {
+              onCommit('name', e.target.value, originalValue || '');
+              context.setFieldValidity(e.target.value.trim().length > 0);
+            }}
+            onBlur={() => context.endEdit()}
+          />
+        );
+      },
     },
     {
       key: 'description',
       label: 'Description',
+      required: true,
       render: (
         value: string,
         row: Role,
         onCommit: (field: string, value: string, originalValue: string) => void,
         isModified: boolean,
-        originalValue: string
-      ) => (
-        <EditableTextCell
-          value={value || ''}
-          originalValue={originalValue || ''}
-          placeholder="Description"
-          onCommit={(nextValue) => onCommit('description', nextValue, originalValue || '')}
-        />
-      ),
+        originalValue: string,
+        context: CellRenderContext
+      ) => {
+        const isNewRow = String(row.id || '').startsWith('__NEW_');
+        const isEditable = isNewRow || !!row.editable;
+
+        if (!isEditable) {
+          return <span className="read-only-field">{value}</span>;
+        }
+
+        if (!context.isEditing) {
+          return (
+            <button type="button" className="role-inline-read" onClick={context.beginEdit}>
+              {value || 'Enter description'}
+            </button>
+          );
+        }
+
+        return (
+          <input
+            autoFocus
+            className="assignment-inline-input"
+            value={value || ''}
+            onChange={(e) => {
+              onCommit('description', e.target.value, originalValue || '');
+              context.setFieldValidity(e.target.value.trim().length > 0);
+            }}
+            onBlur={() => context.endEdit()}
+          />
+        );
+      },
     },
   ];
 
@@ -232,37 +290,151 @@ const AdminRolesPage: React.FC = () => {
     {
       key: 'userName',
       label: 'User',
-      render: (value: string) => <span className="read-only-field">{value}</span>,
+      required: true,
+      render: (
+        value: string,
+        row: any,
+        onCommit: (field: string, value: string, originalValue: string) => void,
+        isModified: boolean,
+        originalValue: string,
+        context: CellRenderContext
+      ) => {
+        const isNewRow = String(row.id || '').startsWith('__NEW_');
+
+        if (!isNewRow) {
+          return <span className="read-only-field">{getDisplayUserName(row)}</span>;
+        }
+
+        if (!context.isEditing) {
+          return (
+            <button type="button" className="assignment-inline-read" onClick={context.beginEdit}>
+              {row.userSelector || 'Select user'}
+            </button>
+          );
+        }
+
+        return (
+          <>
+            <input
+              autoFocus
+              list="role-assignment-user-options"
+              className="assignment-inline-input"
+              value={row.userSelector || ''}
+              onChange={(e) => {
+                const selected = findUserByLabel(e.target.value);
+                onCommit('userSelector', e.target.value, row.userSelector || '');
+                if (selected) {
+                  onCommit('userId', selected.id, row.userId || '');
+                  onCommit('userName', selected.name, row.userName || '');
+                  onCommit('userEmail', selected.email, row.userEmail || '');
+                  context.setFieldValidity(true);
+                } else {
+                  onCommit('userId', '', row.userId || '');
+                  onCommit('userEmail', '', row.userEmail || '');
+                  onCommit('userName', '', row.userName || '');
+                  context.setFieldValidity(false);
+                }
+              }}
+              onBlur={() => context.endEdit()}
+            />
+            <datalist id="role-assignment-user-options">
+              {userOptions.map((option) => (
+                <option key={option.id} value={option.label} />
+              ))}
+            </datalist>
+          </>
+        );
+      },
     },
     {
       key: 'userEmail',
       label: 'Email',
-      render: (value: string) => <span className="email-field">{value}</span>,
+      render: (value: string, row: any) => <span className="email-field">{row.userEmail || value}</span>,
     },
     {
       key: 'roleName',
       label: 'Role',
-      render: (value: string) => <span className="read-only-field">{value}</span>,
+      required: true,
+      render: (
+        value: string,
+        row: any,
+        onCommit: (field: string, value: string, originalValue: string) => void,
+        isModified: boolean,
+        originalValue: string,
+        context: CellRenderContext
+      ) => {
+        const isNewRow = String(row.id || '').startsWith('__NEW_');
+
+        if (!isNewRow) {
+          return <span className="read-only-field">{row.roleName}</span>;
+        }
+
+        if (!context.isEditing) {
+          return (
+            <button type="button" className="assignment-inline-read" onClick={context.beginEdit}>
+              {row.roleSelector || 'Select role'}
+            </button>
+          );
+        }
+
+        return (
+          <>
+            <input
+              autoFocus
+              list="role-assignment-role-options"
+              className="assignment-inline-input"
+              value={row.roleSelector || ''}
+              onChange={(e) => {
+                const selected = findRoleByLabel(e.target.value);
+                onCommit('roleSelector', e.target.value, row.roleSelector || '');
+                if (selected) {
+                  onCommit('roleId', selected.id, row.roleId || '');
+                  onCommit('roleName', selected.label, row.roleName || '');
+                  context.setFieldValidity(true);
+                } else {
+                  onCommit('roleId', '', row.roleId || '');
+                  onCommit('roleName', '', row.roleName || '');
+                  context.setFieldValidity(false);
+                }
+              }}
+              onBlur={() => context.endEdit()}
+            />
+            <datalist id="role-assignment-role-options">
+              {roleOptions.map((option) => (
+                <option key={option.id} value={option.label} />
+              ))}
+            </datalist>
+          </>
+        );
+      },
     },
   ];
 
   return (
     <div className="admin-roles-container">
       <div className="content-wrapper">
-        {error && <div className="error-message">{error}</div>}
+        {actionError && <div className="error-message">{actionError}</div>}
 
         <div className="roles-section">
-          <h2 className="section-title">Custom Roles</h2>
-          <button className="btn-add-primary" onClick={() => navigate('/admin/roles/add')}>
-            + Create Custom Role
-          </button>
+          <h2 className="section-title">Roles</h2>
           <DataTable
+            ref={rolesTableRef}
             columns={roleColumns}
-            data={customRolesWithId}
-            onRowUpdate={(name, updates) => handleRoleUpdate(name, updates)}
-            onRowDelete={(name) => handleRoleDelete(name)}
+            data={roleRows}
+            onRowUpdate={handleRoleUpdate}
+            onRowCreate={handleRoleCreate}
+            onRowDelete={handleRoleDelete}
             isLoading={loading}
+            error={loadError}
             emptyMessage="No entries in this table yet"
+            canAdd
+            onAddClick={() => rolesTableRef.current?.addNewRow()}
+            canDeleteRow={(row) => !!row.editable}
+            newRowDefaults={{
+              name: '',
+              description: '',
+              editable: true,
+            }}
           />
         </div>
 
@@ -270,15 +442,26 @@ const AdminRolesPage: React.FC = () => {
 
         <div className="assignments-section">
           <h2 className="section-title">Assignments</h2>
-          <button className="btn-add-primary" onClick={() => navigate('/admin/roles/assign')}>
-            + Create Role Assignment
-          </button>
           <DataTable
+            ref={assignmentsTableRef}
             columns={assignmentColumns}
-            data={assignmentsWithId}
-            onRowDelete={(id) => handleAssignmentDelete(id)}
+            data={assignments}
+            onRowCreate={handleAssignmentCreate}
+            onRowDelete={handleAssignmentDelete}
             isLoading={loading}
+            error={loadError}
             emptyMessage="No entries in this table yet"
+            canAdd
+            onAddClick={() => assignmentsTableRef.current?.addNewRow()}
+            newRowDefaults={{
+              userId: '',
+              userName: '',
+              userEmail: '',
+              userSelector: '',
+              roleId: '',
+              roleName: '',
+              roleSelector: '',
+            }}
           />
         </div>
       </div>

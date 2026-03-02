@@ -57,7 +57,7 @@ Carousel/
 - `AuthServiceApplication.java` - Spring Boot starter
 - `AuthController.java` - REST endpoints for login and token validation
 - `AuthService.java` - Business logic with JWT token generation
-- `CredentialRepository.java` - MongoDB data access
+- `CredentialRepository.java` - PostgreSQL (JPA) data access
 - `Credential.java` - Domain model
 - `LoginRequest.java`, `LoginResponse.java`, `ValidateTokenRequest.java` - DTOs
 - `AuthServiceTest.java` - Comprehensive unit tests
@@ -336,7 +336,7 @@ All pages have professional CSS files with:
 
 - âœ… Microservices architecture (4 independent services)
 - âœ… API Gateway for unified entry point
-- âœ… MongoDB for data persistence
+- âœ… PostgreSQL for data persistence
 - âœ… JWT authentication
 - âœ… Inter-service communication (Feign clients)
 - âœ… OpenAPI/Swagger specifications (auto-generated)
@@ -366,7 +366,7 @@ All pages have professional CSS files with:
 - âœ… User Service tests (registration, verification, approval)
 - âœ… Approval Service tests (approval creation, retrieval)
 - âœ… Test profiles for each service
-- âœ… MongoDB embedded for testing
+- âœ… PostgreSQL-backed test profiles
 
 **Frontend Tests:**
 - âœ… Component rendering tests
@@ -455,7 +455,7 @@ docker-compose up
 - âœ… Maven parent and child POMs configured
 - âœ… All microservices implemented
 - âœ… Spring Boot 3.2.0 configured
-- âœ… MongoDB repositories implemented
+- âœ… JPA repositories implemented
 - âœ… JWT authentication implemented
 - âœ… Email verification flow working
 - âœ… Access level system configured
@@ -481,8 +481,8 @@ docker-compose up
    - Frontend: Run `npm install` in frontend directory
 
 2. **Database Setup:**
-   - Create MongoDB instance
-   - Update connection strings in application.yml files
+   - Ensure PostgreSQL is running
+   - Update datasource values in application.yml files when needed
 
 3. **Run the Application:**
    - Start each backend service

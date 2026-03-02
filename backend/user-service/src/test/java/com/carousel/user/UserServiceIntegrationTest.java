@@ -144,6 +144,7 @@ public class UserServiceIntegrationTest {
         mockMvc.perform(post("/admin/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest)
+                .param("requesterEmail", "admin@example.com")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("newuser@example.com"))
@@ -184,6 +185,7 @@ public class UserServiceIntegrationTest {
         mockMvc.perform(put("/admin/" + regularUser.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateRequest)
+                .param("requesterEmail", "admin@example.com")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Updated"))
@@ -216,6 +218,7 @@ public class UserServiceIntegrationTest {
         regularUser = userRepository.save(regularUser);
 
         mockMvc.perform(delete("/admin/" + regularUser.getId())
+                .param("requesterEmail", "admin@example.com")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
 
@@ -239,6 +242,7 @@ public class UserServiceIntegrationTest {
         String token = loginAndGetToken("admin@example.com", "adminpass");
 
         mockMvc.perform(get("/admin/all")
+                .param("requesterEmail", "admin@example.com")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].email").exists());
@@ -270,6 +274,7 @@ public class UserServiceIntegrationTest {
         mockMvc.perform(post("/admin/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createRequest)
+                .param("requesterEmail", "regular@example.com")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }

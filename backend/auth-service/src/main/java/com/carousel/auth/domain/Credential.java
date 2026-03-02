@@ -1,17 +1,28 @@
 package com.carousel.auth.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Document(collection = "credentials")
+@Entity
+@Table(name = "auth_credentials")
 public class Credential {
     @Id
+    @Column(nullable = false, updatable = false)
     private String id;
+    @Column(nullable = false, unique = true)
     private String email;
+    @Column(nullable = false)
     private String passwordHash;
+    @Column(nullable = false)
     private LocalDateTime createdAt;
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     public Credential() {
@@ -104,6 +115,24 @@ public class Credential {
         public Credential build() {
             return new Credential(id, email, passwordHash, createdAt, updatedAt);
         }
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (id == null || id.isBlank()) {
+            id = UUID.randomUUID().toString();
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }
 

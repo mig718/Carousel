@@ -12,10 +12,10 @@ param(
 function Start-Backend($service) {
     if ($service) {
         Write-Host "[>] Launching backend service: $service" -ForegroundColor Cyan
-        & ./launch-backend.ps1 -Service $service
+        & ./launch-backend.ps1 -Service $service -AutoStartPostgres
     } else {
         Write-Host "[>] Launching all backend services" -ForegroundColor Cyan
-        & ./launch-backend.ps1
+        & ./launch-backend.ps1 -AutoStartPostgres
     }
 }
 

@@ -4,6 +4,7 @@ import com.carousel.user.domain.AccessLevel;
 import com.carousel.user.domain.PendingUser;
 import com.carousel.user.domain.User;
 import com.carousel.user.dto.RegisterRequest;
+import com.carousel.user.client.AuthServiceClient;
 import com.carousel.user.repository.PendingUserRepository;
 import com.carousel.user.repository.UserRepository;
 import com.carousel.user.service.UserService;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +29,9 @@ public class UserServiceTest {
     
     @Autowired
     private PendingUserRepository pendingUserRepository;
+
+    @MockBean
+    private AuthServiceClient authServiceClient;
 
     @BeforeEach
     public void setUp() {

@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
 import { logout } from '../redux/authSlice';
-import { roleService, userService } from '../services/userService';
+import { auditService, roleService, userService } from '../services/userService';
 import './SideMenu.css';
 
 const SideMenu: React.FC = () => {
@@ -14,7 +14,13 @@ const SideMenu: React.FC = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const handleExit = () => {
+  const handleExit = async () => {
+    if (email) {
+      try {
+        await auditService.trackLogout(email);
+      } catch {
+      }
+    }
     dispatch(logout());
     window.close();
     setTimeout(() => {
@@ -77,6 +83,14 @@ const SideMenu: React.FC = () => {
     </svg>
   );
 
+  const iconInventory = (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 7.5l8-4 8 4-8 4-8-4z" />
+      <path d="M4 7.5v9l8 4 8-4v-9" />
+      <path d="M12 11.5v9" />
+    </svg>
+  );
+
   const iconAdmin = (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 3l7 3v5c0 5-3.2 8-7 10-3.8-2-7-5-7-10V6l7-3z" />
@@ -115,6 +129,15 @@ const SideMenu: React.FC = () => {
           <NavLink to="/search" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
             <span className="menu-icon">{iconSearch}</span>
             <span className="menu-text">Search</span>
+          </NavLink>
+        </div>
+
+        <div className="menu-divider"></div>
+
+        <div className="menu-section">
+          <NavLink to="/inventory" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
+            <span className="menu-icon">{iconInventory}</span>
+            <span className="menu-text">Inventory</span>
           </NavLink>
         </div>
 

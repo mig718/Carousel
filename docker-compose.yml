@@ -1,16 +1,17 @@
 ﻿version: '3.8'
 
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: carousel-mongodb
+  postgres:
+    image: postgres:16
+    container_name: carousel-postgres
     ports:
-      - "27017:27017"
+      - "5432:5432"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: carousel_roles
     volumes:
-      - mongodb_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - carousel-network
 
@@ -22,9 +23,11 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - mongodb
+      - postgres
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/carousel_auth?authSource=admin
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
     networks:
       - carousel-network
 
@@ -36,9 +39,11 @@ services:
     ports:
       - "8002:8002"
     depends_on:
-      - mongodb
+      - postgres
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/carousel_user?authSource=admin
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
     networks:
       - carousel-network
 
@@ -50,9 +55,11 @@ services:
     ports:
       - "8003:8003"
     depends_on:
-      - mongodb
+      - postgres
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/carousel_approval?authSource=admin
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
     networks:
       - carousel-network
 
@@ -64,10 +71,34 @@ services:
     ports:
       - "8000:8000"
     depends_on:
+      - postgres
       - auth-service
       - user-service
       - approval-service
+      - role-service
       - inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    networks:
+      - carousel-network
+
+  role-service:
+    build:
+      context: ./backend/role-service
+      dockerfile: Dockerfile
+    container_name: role-service
+    ports:
+      - "8004:8004"
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      CAROUSEL_CLIENTS_USER_SERVICE_URL: http://user-service:8002
     networks:
       - carousel-network
 
@@ -79,14 +110,16 @@ services:
     ports:
       - "8005:8005"
     depends_on:
-      - mongodb
+      - postgres
     environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/carousel_inventory?authSource=admin
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
     networks:
       - carousel-network
 
 volumes:
-  mongodb_data:
+  postgres_data:
 
 networks:
   carousel-network:

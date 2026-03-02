@@ -1,12 +1,29 @@
 spring:
   application:
     name: role-service
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/carousel_roles
+  cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            url: ${carousel.clients.user-service-url:http://localhost:8002}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carousel_roles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
 server:
   port: 8004
+  tomcat:
+    redirect-context-root: false
   servlet:
     context-path: /api/roles
 
@@ -35,17 +52,5 @@ springdoc:
     path: /v3/api-docs
 
 carousel:
-  roles:
-    predefined:
-      - name: Support
-        description: Full access to user management
-      - name: ReadOnly
-        description: Read-only access
-      - name: PowerUser
-        description: Elevated access to advanced functionality
-      - name: InventoryManager
-        description: Manage inventory items and type metadata
-      - name: InventoryUser
-        description: Manage inventory items and quantities
-      - name: InventoryAdmin
-        description: Inventory administration with type/subtype management
+  clients:
+    user-service-url: http://localhost:8002

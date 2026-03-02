@@ -3,12 +3,12 @@ package com.carousel.inventory;
 import com.carousel.inventory.client.RoleServiceClient;
 import com.carousel.inventory.client.UserServiceClient;
 import com.carousel.inventory.domain.InventoryItem;
-import com.carousel.inventory.domain.ResourceType;
+import com.carousel.inventory.domain.Resource;
 import com.carousel.inventory.dto.InventoryItemRequest;
-import com.carousel.inventory.dto.ResourceTypeRequest;
+import com.carousel.inventory.dto.ResourceRequest;
 import com.carousel.inventory.dto.UserDto;
 import com.carousel.inventory.repository.InventoryItemRepository;
-import com.carousel.inventory.repository.ResourceTypeRepository;
+import com.carousel.inventory.repository.ResourceRepository;
 import com.carousel.inventory.service.InventoryManagementService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 public class InventoryManagementServiceTest {
 
     @Mock
-    private ResourceTypeRepository resourceTypeRepository;
+    private ResourceRepository resourceRepository;
 
     @Mock
     private InventoryItemRepository inventoryItemRepository;
@@ -43,54 +43,58 @@ public class InventoryManagementServiceTest {
     private InventoryManagementService inventoryManagementService;
 
     @Test
-    public void createTypeAllowsAdminWithoutExplicitInventoryRole() {
-        ResourceTypeRequest request = new ResourceTypeRequest();
-        request.setName("Metal");
-        request.setDescription("Metal resources");
-        request.setIcon("🪙");
+    public void createResourceAllowsAdminWithoutExplicitInventoryRole() {
+        ResourceRequest request = new ResourceRequest();
+        request.setCategory("Metals");
+        request.setType("Gold");
+        request.setSubType("14K");
+        request.setDescription("Gold resources");
 
         when(userServiceClient.getUserByEmail("admin@example.com"))
                 .thenReturn(new UserDto("1", "Admin", "User", "admin@example.com", "Admin"));
         when(roleServiceClient.getRolesForUser("admin@example.com")).thenReturn(List.of("Support"));
-        when(resourceTypeRepository.existsByNameIgnoreCase("Metal")).thenReturn(false);
-        when(resourceTypeRepository.save(any(ResourceType.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resourceRepository.save(any(Resource.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = inventoryManagementService.createType(request, "admin@example.com");
-        assertEquals("Metal", result.getName());
+        var result = inventoryManagementService.createResource(request, "admin@example.com");
+        assertEquals("Metals", result.getCategory());
+        assertEquals("Gold", result.getType());
     }
 
     @Test
-    public void createTypeRejectsInventoryUser() {
-        ResourceTypeRequest request = new ResourceTypeRequest();
-        request.setName("Stone");
+    public void createResourceRejectsInventoryUser() {
+        ResourceRequest request = new ResourceRequest();
+        request.setCategory("Stones");
+        request.setType("Diamond");
+        request.setSubType("White");
         request.setDescription("Stone resources");
-        request.setIcon("💎");
 
         when(userServiceClient.getUserByEmail("inventory.user@example.com"))
                 .thenReturn(new UserDto("2", "Inventory", "User", "inventory.user@example.com", "User"));
         when(roleServiceClient.getRolesForUser("inventory.user@example.com")).thenReturn(List.of("InventoryUser"));
 
         RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> inventoryManagementService.createType(request, "inventory.user@example.com"));
-        assertEquals("Insufficient role privileges to manage resource types", ex.getMessage());
+                () -> inventoryManagementService.createResource(request, "inventory.user@example.com"));
+        assertEquals("Insufficient role privileges to manage resources", ex.getMessage());
     }
 
     @Test
-    public void createItemAllowsInventoryUserAndStoresQuantity() {
+    public void createItemAllowsInventoryUserAndStoresQuantities() {
         InventoryItemRequest request = new InventoryItemRequest();
-        request.setName("Round Diamond");
-        request.setDescription("1ct round diamond");
-        request.setResourceTypeId("type-1");
+        request.setResourceId("resource-1");
         request.setAvailableQuantity(25);
+        request.setPendingQuantity(6);
 
-        ResourceType type = new ResourceType();
-        type.setId("type-1");
-        type.setName("Stone");
+        Resource resource = new Resource();
+        resource.setId("resource-1");
+        resource.setCategory("Stones");
+        resource.setType("Diamond");
+        resource.setSubType("White");
+        resource.setDescription("1ct round diamond");
 
         when(userServiceClient.getUserByEmail("inventory.user@example.com"))
                 .thenReturn(new UserDto("2", "Inventory", "User", "inventory.user@example.com", "User"));
         when(roleServiceClient.getRolesForUser("inventory.user@example.com")).thenReturn(List.of("InventoryUser"));
-        when(resourceTypeRepository.findById("type-1")).thenReturn(Optional.of(type));
+        when(resourceRepository.findById("resource-1")).thenReturn(Optional.of(resource));
         when(inventoryItemRepository.save(any(InventoryItem.class))).thenAnswer(invocation -> {
             InventoryItem saved = invocation.getArgument(0);
             saved.setId("item-1");
@@ -100,6 +104,7 @@ public class InventoryManagementServiceTest {
         var result = inventoryManagementService.createItem(request, "inventory.user@example.com");
         assertEquals("item-1", result.getId());
         assertEquals(25, result.getAvailableQuantity());
-        assertEquals("Stone", result.getResourceTypeName());
+        assertEquals(6, result.getPendingQuantity());
+        assertEquals("Diamond", result.getResourceType());
     }
 }

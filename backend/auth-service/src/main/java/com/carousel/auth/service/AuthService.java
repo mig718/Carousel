@@ -23,7 +23,7 @@ public class AuthService {
     @Value("${jwt.secret:carousel-secret-key-for-jwt-token-generation-and-validation}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:86400000}")
+    @Value("${jwt.expiration:1800000}")
     private long jwtExpiration;
 
     public AuthService(CredentialRepository credentialRepository, SessionService sessionService) {
@@ -40,7 +40,7 @@ public class AuthService {
 
         String passwordHash = DigestUtils.sha256Hex(request.getPassword());
         if (!credential.get().getPasswordHash().equals(passwordHash)) {
-            throw new RuntimeException("Invalid password. Request pwd: " + request.getPassword() + ", Hash: " + passwordHash + ", Stored hash: " + credential.get().getPasswordHash());
+            throw new RuntimeException("Invalid password");
         }
 
         String token = generateToken(credential.get().getEmail(), credential.get().getId());

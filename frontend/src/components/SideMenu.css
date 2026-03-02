@@ -130,7 +130,7 @@
 
 .menu-link.active {
   background: transparent;
-  color: #5b49c7;
+  color: #8a6bff;
 }
 
 .menu-link:hover::before {
@@ -138,13 +138,7 @@
   transform: translateY(-50%) scale(1);
 }
 
-.menu-link.active::before {
-  opacity: 1;
-  transform: translateY(-50%) scale(1);
-}
-
-.menu-link:hover::after,
-.menu-link.active::after {
+.menu-link:hover::after {
   opacity: 1;
   transform: translateY(-50%) scale(1);
 }
@@ -173,7 +167,7 @@
 }
 
 .menu-link.admin.active {
-  color: #a66209;
+  color: #d9851a;
 }
 
 .menu-exit {

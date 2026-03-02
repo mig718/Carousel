@@ -10,16 +10,30 @@ import {
   AccessLevel,
   UpdateOwnProfileRequest,
   Role,
+  RoleAssignment,
   RoleAssignmentRequest,
+  AuditEvent,
+  Resource,
+  ResourceRequest,
+  ResourceCatalog,
+  InventoryItem,
+  InventoryItemRequest,
   ResourceType,
   ResourceTypeRequest,
-  InventoryItem,
-  InventoryItemRequest
+  ResourceTag,
+  ResourceTagRequest,
+  InventoryItemCustomTag,
+  InventoryItemCustomTagRequest,
+  TagGraphicOption
 } from '../types';
 
 export const authService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+    const response = await apiClient.post<LoginResponse>('/auth/login', credentials, {
+      headers: {
+        'X-Login-Email': credentials.email,
+      },
+    });
     return response.data;
   },
 
@@ -82,6 +96,14 @@ export const userService = {
     const response = await apiClient.put<User>(`/users/admin/${userId}`, data, { params: { requesterEmail } });
     return response.data;
   },
+
+  createUserAdmin: async (
+    requesterEmail: string,
+    data: { firstName: string; lastName: string; email: string; accessLevel: AccessLevel }
+  ): Promise<User> => {
+    const response = await apiClient.post<User>('/users/admin/create', data, { params: { requesterEmail } });
+    return response.data;
+  },
 };
 
 export const approvalService = {
@@ -115,12 +137,12 @@ export const approvalService = {
 
 export const roleService = {
   getRoles: async (): Promise<Role[]> => {
-    const response = await apiClient.get<Role[]>('/roles');
+    const response = await apiClient.get<Role[]>('/roles/');
     return response.data;
   },
 
-  getCustomRoles: async (): Promise<Role[]> => {
-    const response = await apiClient.get<Role[]>('/roles/custom');
+  getAssignments: async (requesterEmail: string): Promise<RoleAssignment[]> => {
+    const response = await apiClient.get<RoleAssignment[]>('/roles/assignments', { params: { requesterEmail } });
     return response.data;
   },
 
@@ -135,17 +157,17 @@ export const roleService = {
   },
 
   createRole: async (requesterEmail: string, role: Role): Promise<Role> => {
-    const response = await apiClient.post<Role>('/roles', role, { params: { requesterEmail } });
+    const response = await apiClient.post<Role>('/roles/', role, { params: { requesterEmail } });
     return response.data;
   },
 
-  updateRole: async (requesterEmail: string, roleName: string, role: Role): Promise<Role> => {
-    const response = await apiClient.put<Role>(`/roles/${encodeURIComponent(roleName)}`, role, { params: { requesterEmail } });
+  updateRole: async (requesterEmail: string, roleId: string, role: Role): Promise<Role> => {
+    const response = await apiClient.put<Role>(`/roles/${encodeURIComponent(roleId)}`, role, { params: { requesterEmail } });
     return response.data;
   },
 
-  deleteRole: async (requesterEmail: string, roleName: string): Promise<string> => {
-    const response = await apiClient.delete<string>(`/roles/${encodeURIComponent(roleName)}`, { params: { requesterEmail } });
+  deleteRole: async (requesterEmail: string, roleId: string): Promise<string> => {
+    const response = await apiClient.delete<string>(`/roles/${encodeURIComponent(roleId)}`, { params: { requesterEmail } });
     return response.data;
   },
 
@@ -161,28 +183,80 @@ export const roleService = {
 };
 
 export const inventoryService = {
-  getTypes: async (requesterEmail: string): Promise<ResourceType[]> => {
-    const response = await apiClient.get<ResourceType[]>('/inventory/types', { params: { requesterEmail } });
+  getResourceTypes: async (requesterEmail: string): Promise<ResourceType[]> => {
+    const response = await apiClient.get<ResourceType[]>('/inventory/resource-types', { params: { requesterEmail } });
     return response.data;
   },
 
-  getIcons: async (): Promise<string[]> => {
-    const response = await apiClient.get<string[]>('/inventory/icons');
+  createResourceType: async (requesterEmail: string, request: ResourceTypeRequest): Promise<ResourceType> => {
+    const response = await apiClient.post<ResourceType>('/inventory/resource-types', request, { params: { requesterEmail } });
     return response.data;
   },
 
-  createType: async (requesterEmail: string, request: ResourceTypeRequest): Promise<ResourceType> => {
-    const response = await apiClient.post<ResourceType>('/inventory/types', request, { params: { requesterEmail } });
+  updateResourceType: async (requesterEmail: string, resourceTypeId: string, request: ResourceTypeRequest): Promise<ResourceType> => {
+    const response = await apiClient.put<ResourceType>(`/inventory/resource-types/${encodeURIComponent(resourceTypeId)}`, request, { params: { requesterEmail } });
     return response.data;
   },
 
-  updateType: async (requesterEmail: string, typeId: string, request: ResourceTypeRequest): Promise<ResourceType> => {
-    const response = await apiClient.put<ResourceType>(`/inventory/types/${encodeURIComponent(typeId)}`, request, { params: { requesterEmail } });
+  deleteResourceType: async (requesterEmail: string, resourceTypeId: string): Promise<void> => {
+    await apiClient.delete(`/inventory/resource-types/${encodeURIComponent(resourceTypeId)}`, { params: { requesterEmail } });
+  },
+
+  getResourceTags: async (requesterEmail: string): Promise<ResourceTag[]> => {
+    const response = await apiClient.get<ResourceTag[]>('/inventory/resource-tags', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  createResourceTag: async (requesterEmail: string, request: ResourceTagRequest): Promise<ResourceTag> => {
+    const response = await apiClient.post<ResourceTag>('/inventory/resource-tags', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateResourceTag: async (requesterEmail: string, resourceTagId: string, request: ResourceTagRequest): Promise<ResourceTag> => {
+    const response = await apiClient.put<ResourceTag>(`/inventory/resource-tags/${encodeURIComponent(resourceTagId)}`, request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  deleteResourceTag: async (requesterEmail: string, resourceTagId: string): Promise<void> => {
+    await apiClient.delete(`/inventory/resource-tags/${encodeURIComponent(resourceTagId)}`, { params: { requesterEmail } });
+  },
+
+  getResourceIcons: async (requesterEmail: string): Promise<string[]> => {
+    const response = await apiClient.get<string[]>('/inventory/resource-icons', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getTagGraphics: async (requesterEmail: string): Promise<TagGraphicOption[]> => {
+    const response = await apiClient.get<TagGraphicOption[]>('/inventory/tag-graphics', { params: { requesterEmail } });
+    return response.data;
+  },
+  getResources: async (requesterEmail: string): Promise<Resource[]> => {
+    const response = await apiClient.get<Resource[]>('/inventory/resources', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getResourceCatalog: async (requesterEmail: string): Promise<ResourceCatalog[]> => {
+    const response = await apiClient.get<ResourceCatalog[]>('/inventory/resources/catalog', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  createResource: async (requesterEmail: string, request: ResourceRequest): Promise<Resource> => {
+    const response = await apiClient.post<Resource>('/inventory/resources', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateResource: async (requesterEmail: string, resourceId: string, request: ResourceRequest): Promise<Resource> => {
+    const response = await apiClient.put<Resource>(`/inventory/resources/${encodeURIComponent(resourceId)}`, request, { params: { requesterEmail } });
     return response.data;
   },
 
   getItems: async (requesterEmail: string): Promise<InventoryItem[]> => {
     const response = await apiClient.get<InventoryItem[]>('/inventory/items', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getItemById: async (requesterEmail: string, itemId: string): Promise<InventoryItem> => {
+    const response = await apiClient.get<InventoryItem>(`/inventory/items/${encodeURIComponent(itemId)}`, { params: { requesterEmail } });
     return response.data;
   },
 
@@ -199,5 +273,45 @@ export const inventoryService = {
   adjustQuantity: async (requesterEmail: string, itemId: string, quantityDelta: number): Promise<InventoryItem> => {
     const response = await apiClient.patch<InventoryItem>(`/inventory/items/${encodeURIComponent(itemId)}/quantity`, { quantityDelta }, { params: { requesterEmail } });
     return response.data;
+  },
+
+  getItemCustomTags: async (requesterEmail: string): Promise<InventoryItemCustomTag[]> => {
+    const response = await apiClient.get<InventoryItemCustomTag[]>('/inventory/item-custom-tags', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  createItemCustomTag: async (requesterEmail: string, request: InventoryItemCustomTagRequest): Promise<InventoryItemCustomTag> => {
+    const response = await apiClient.post<InventoryItemCustomTag>('/inventory/item-custom-tags', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateItemCustomTag: async (requesterEmail: string, tagId: string, request: InventoryItemCustomTagRequest): Promise<InventoryItemCustomTag> => {
+    const response = await apiClient.put<InventoryItemCustomTag>(`/inventory/item-custom-tags/${encodeURIComponent(tagId)}`, request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  deleteItemCustomTag: async (requesterEmail: string, tagId: string): Promise<void> => {
+    await apiClient.delete(`/inventory/item-custom-tags/${encodeURIComponent(tagId)}`, { params: { requesterEmail } });
+  },
+};
+
+export const auditService = {
+  getUserHistory: async (requesterEmail: string, targetEmail: string, limit = 200): Promise<AuditEvent[]> => {
+    const response = await apiClient.get<AuditEvent[]>('/audit/history', {
+      params: {
+        requesterEmail,
+        targetEmail,
+        limit,
+      },
+    });
+    return response.data;
+  },
+
+  trackLogout: async (requesterEmail: string): Promise<void> => {
+    await apiClient.post('/audit/logout', {}, {
+      params: {
+        requesterEmail,
+      },
+    });
   },
 };

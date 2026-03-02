@@ -7,7 +7,7 @@
 - JDK 17
 - Maven 3.9+
 - Node.js 16+
-- MongoDB Community Edition
+- PostgreSQL 16+
 - Git
 - VS Code or IntelliJ IDEA
 
@@ -19,12 +19,10 @@ cd backend
 mvn clean install
 ```
 
-2. Create MongoDB databases:
+2. Ensure PostgreSQL is running:
 ```bash
-# Using MongoDB CLI or MongoDBCompass, create:
-# - carousel_auth
-# - carousel_user
-# - carousel_approval
+# Using project helper scripts
+npm run postgres:start
 ```
 
 3. Run services in separate terminals:
@@ -122,7 +120,7 @@ public class MyRequestDto {
 
 2. Add repository method (if needed):
 ```java
-public interface MyRepository extends MongoRepository<MyEntity, String> {
+public interface MyRepository extends JpaRepository<MyEntity, String> {
     Optional<MyEntity> findByField(String field);
 }
 ```

@@ -1,0 +1,64 @@
+.admin-activity-container {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 8px 16px 20px;
+}
+
+.admin-activity-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.admin-activity-controls select {
+  min-width: 320px;
+  padding: 10px 12px;
+  border: 1px solid #d9dde3;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.95rem;
+}
+
+.admin-activity-controls button {
+  padding: 10px 14px;
+  border: 1px solid #c9d9f5;
+  border-radius: 6px;
+  background: #eaf2ff;
+  color: #1f3b63;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-activity-controls button:hover {
+  background: #dbe8ff;
+}
+
+.admin-activity-error {
+  background: #ffe5e5;
+  color: #b00;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.admin-activity-cell {
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.admin-activity-status-success {
+  color: #2f855a;
+  font-weight: 600;
+}
+
+.admin-activity-status-unauthorized {
+  color: #b7791f;
+  font-weight: 600;
+}
+
+.admin-activity-status-fail {
+  color: #c53030;
+  font-weight: 600;
+}

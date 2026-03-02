@@ -1,27 +1,41 @@
 package com.carousel.role.domain;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-@Document(collection = "user_roles")
+@Entity
+@Table(
+        name = "user_role_assignments",
+        uniqueConstraints = @UniqueConstraint(name = "uk_user_role_assignment", columnNames = {"user_id", "role_id"})
+)
 public class UserRoleAssignment {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String userEmail;
-    private List<String> roles = new ArrayList<>();
+
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+
+    @Column(name = "role_id", nullable = false)
+    private String roleId;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     public UserRoleAssignment() {
     }
 
-    public UserRoleAssignment(String id, String userEmail, List<String> roles, LocalDateTime updatedAt) {
+    public UserRoleAssignment(String id, String userId, String roleId, LocalDateTime updatedAt) {
         this.id = id;
-        this.userEmail = userEmail;
-        this.roles = roles;
+        this.userId = userId;
+        this.roleId = roleId;
         this.updatedAt = updatedAt;
     }
 
@@ -33,20 +47,20 @@ public class UserRoleAssignment {
         this.id = id;
     }
 
-    public String getUserEmail() {
-        return userEmail;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public List<String> getRoles() {
-        return roles;
+    public String getRoleId() {
+        return roleId;
     }
 
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
     }
 
     public LocalDateTime getUpdatedAt() {

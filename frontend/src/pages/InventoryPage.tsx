@@ -1,100 +1,158 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { inventoryService } from '../services/userService';
-import { InventoryItem, ResourceType } from '../types';
-import SearchableSelect from '../components/SearchableSelect';
+import { inventoryService, roleService, userService } from '../services/userService';
+import { InventoryItem, Resource } from '../types';
+import InventoryTypeItemsPanel from '../components/InventoryTypeItemsPanel';
 import './InventoryPage.css';
 
+interface InventorySectionData {
+  typeName: string;
+  icon: string;
+  items: InventoryItem[];
+}
+
 const InventoryPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { resourceTypeName } = useParams<{ resourceTypeName?: string }>();
   const user = useSelector((state: RootState) => state.auth.user);
-  const userEmail = user?.email || '';
+  const authEmail = useSelector((state: RootState) => state.auth.email);
+  const userEmail = authEmail || user?.email || localStorage.getItem('email') || '';
 
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [types, setTypes] = useState<ResourceType[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [itemsFetchFailed, setItemsFetchFailed] = useState(false);
+  const [canCreate, setCanCreate] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    resourceTypeId: '',
-    resourceSubTypeId: '',
-    availableQuantity: '',
-  });
+
+  const isDetailedDashboard = !!resourceTypeName;
+  const decodedTypeName = resourceTypeName ? decodeURIComponent(resourceTypeName) : '';
 
   useEffect(() => {
+    if (!userEmail) {
+      setLoading(false);
+      setItemsFetchFailed(true);
+      setError('Missing session email');
+      return;
+    }
+
     loadInventoryData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail]);
 
   const loadInventoryData = async () => {
+    if (!userEmail) {
+      return;
+    }
+
     setLoading(true);
     setItemsFetchFailed(false);
 
     try {
-      const itemsData = await inventoryService.getItems(userEmail);
-      setItems(itemsData);
+      const [itemsData, resourcesData, currentUser, roles] = await Promise.all([
+        inventoryService.getItems(userEmail),
+        inventoryService.getResources(userEmail),
+        userService.getCurrentUser(userEmail),
+        roleService.getRolesForUser(userEmail),
+      ]);
+
+      const roleSet = new Set((roles || []).map((role) => role.toLowerCase()));
+      const isAdmin = currentUser.accessLevel === 'Admin';
+      const canCreateOrManage = isAdmin || roleSet.has('inventorymanager') || roleSet.has('inventoryadmin');
+
+      setItems(itemsData || []);
+      setResources(resourcesData);
+      setCanCreate(canCreateOrManage);
+      setItemsFetchFailed(false);
+      setError(null);
     } catch (err) {
       setItems([]);
+      setResources([]);
       setItemsFetchFailed(true);
-      console.error(err);
-    }
-
-    try {
-      const typesData = await inventoryService.getTypes(userEmail);
-      setTypes(typesData);
-    } catch (err) {
-      setTypes([]);
+      setError('Failed to load inventory dashboard');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getSubTypes = (parentTypeId: string) => {
-    return types.filter((t) => t.parentTypeId === parentTypeId);
-  };
+  const showInventoryLandingState = itemsFetchFailed || items.length === 0;
 
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const newItem = await inventoryService.createItem(userEmail, {
-        name: formData.name,
-        description: formData.description,
-        resourceTypeId: formData.resourceTypeId,
-        resourceSubTypeId: formData.resourceSubTypeId || undefined,
-        availableQuantity: parseInt(formData.availableQuantity) || 0,
-      });
-      setItems([...items, newItem]);
-      setFormData({
-        name: '',
-        description: '',
-        resourceTypeId: '',
-        resourceSubTypeId: '',
-        availableQuantity: '',
-      });
-      setItemsFetchFailed(false);
-      setError(null);
-      setShowAddForm(false);
-    } catch (err) {
-      setError('Failed to add item');
-      console.error(err);
+  const resourceCount = resources.length;
+  const totalAvailable = useMemo(
+    () => items.reduce((total, item) => total + (Number(item.availableQuantity) || 0), 0),
+    [items]
+  );
+  const totalPending = useMemo(
+    () => items.reduce((total, item) => total + (Number(item.pendingQuantity) || 0), 0),
+    [items]
+  );
+
+  const matchesSearch = (item: InventoryItem, text: string) => {
+    if (!text) {
+      return true;
     }
+
+    const normalizedText = text.toLowerCase();
+    const searchableFields = [
+      item.resourceType,
+      item.resourceCategory,
+      item.resourceSubType,
+      item.resourceTags,
+      item.resourceDescription,
+      ...(item.customTagNames || []),
+    ]
+      .filter((value): value is string => !!value)
+      .join(' ')
+      .toLowerCase();
+
+    return searchableFields.includes(normalizedText);
   };
 
-  const showInventoryLandingState = !showAddForm && (itemsFetchFailed || items.length === 0);
+  const sections = useMemo(() => {
+    const map = new Map<string, InventorySectionData>();
 
-  const handleQuantityAdjust = async (itemId: string, delta: number) => {
-    try {
-      const updated = await inventoryService.adjustQuantity(userEmail, itemId, delta);
-      setItems(items.map((i) => (i.id === itemId ? updated : i)));
-    } catch (err) {
-      setError('Failed to adjust quantity');
-      console.error(err);
-    }
-  };
+    items.forEach((item) => {
+      if (!matchesSearch(item, searchQuery)) {
+        return;
+      }
+
+      const typeName = item.resourceCategory || 'Uncategorized';
+      const existing = map.get(typeName);
+
+      if (!existing) {
+        map.set(typeName, {
+          typeName,
+          icon: item.resourceIcon || '📦',
+          items: [item],
+        });
+        return;
+      }
+
+      existing.items.push(item);
+      if (!existing.icon && item.resourceIcon) {
+        existing.icon = item.resourceIcon;
+      }
+    });
+
+    const resolvedSections = Array.from(map.values()).map((section) => {
+      const resource = resources.find((candidate) => candidate.category === section.typeName && candidate.icon);
+      if (resource?.icon) {
+        return { ...section, icon: resource.icon };
+      }
+      return section;
+    });
+
+    return resolvedSections.sort((left, right) => left.typeName.localeCompare(right.typeName));
+  }, [items, resources, searchQuery]);
+
+  const detailedSection = useMemo(
+    () => sections.find((section) => section.typeName.toLowerCase() === decodedTypeName.toLowerCase()),
+    [sections, decodedTypeName]
+  );
 
   if (loading) {
     return (
@@ -105,180 +163,100 @@ const InventoryPage: React.FC = () => {
   }
 
   return (
-      <div className="inventory-page-content">
-        <div className="inventory-page-header">
-          <button
-            className="btn-primary"
-            onClick={() => setShowAddForm(!showAddForm)}
-          >
-            {showAddForm ? 'Cancel' : '+ Add Item'}
-          </button>
+    <div className="inventory-page-content">
+      <div className="inventory-dashboard-header">
+        <div className="inventory-dashboard-title">
+          <h1>{isDetailedDashboard ? `Inventory Dashboard (${decodedTypeName})` : 'Inventory Dashboard'}</h1>
+          <p>Find items fast, open details, and keep quantities accurate.</p>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        {showAddForm && (
-          <form className="add-item-form" onSubmit={handleAddItem}>
-            <h2>Add New Inventory Item</h2>
-
-            <div className="form-group">
-              <label>Item Name *</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Premium Round Diamond"
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <SearchableSelect
-                  label="Resource Type"
-                  placeholder="Select item type..."
-                  required
-                  value={formData.resourceTypeId}
-                  onChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      resourceTypeId: value,
-                      resourceSubTypeId: '',
-                    })
-                  }
-                  options={types
-                    .filter((t) => !t.parentTypeId)
-                    .map((t) => ({
-                      value: t.id,
-                      label: t.name,
-                    }))}
-                />
-              </div>
-
-              {formData.resourceTypeId && getSubTypes(formData.resourceTypeId).length > 0 && (
-                <div className="form-group">
-                  <SearchableSelect
-                    label="Sub Type"
-                    placeholder="Select sub type..."
-                    value={formData.resourceSubTypeId}
-                    onChange={(value) =>
-                      setFormData({ ...formData, resourceSubTypeId: value })
-                    }
-                    options={getSubTypes(formData.resourceTypeId).map((t) => ({
-                      value: t.id,
-                      label: t.name,
-                    }))}
-                  />
-                </div>
-              )}
-            </div>
-
-            {(formData.resourceTypeId || true) && (
-              <>
-                <div className="form-group">
-                  <label>Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Item description"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Available Quantity *</label>
-                  <input
-                    type="number"
-                    required
-                    min="0"
-                    value={formData.availableQuantity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, availableQuantity: e.target.value })
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="form-actions">
-              <button type="submit" className="btn-primary">
-                Save Item
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setShowAddForm(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-
-        {showInventoryLandingState ? (
-          <div className="inventory-empty-dashboard">
-            <img
-              className="inventory-empty-icon"
-              src="/inventory-empty.svg"
-              alt="Empty inventory"
-            />
-            <h2>There is no data here yet...</h2>
-            <p className="inventory-empty-message">
-              {itemsFetchFailed
-                ? 'We could not load inventory items from the database right now.'
-                : 'Click "+ Add Item" to create the first inventory item.'}
-            </p>
-          </div>
-        ) : (
-          <div className="items-grid">
-            {items.map((item) => (
-              <div key={item.id} className="inventory-card">
-                <div className="card-header">
-                  <h3>{item.name}</h3>
-                  <span className="item-type">
-                    {item.resourceTypeName}
-                    {item.resourceSubTypeName && ` / ${item.resourceSubTypeName}`}
-                  </span>
-                </div>
-
-                {item.description && (
-                  <p className="card-description">{item.description}</p>
-                )}
-
-                <div className="quantity-section">
-                  <span className="quantity-label">Available Quantity:</span>
-                  <div className="quantity-controls">
-                    <button
-                      className="btn-sm btn-secondary"
-                      onClick={() => handleQuantityAdjust(item.id, -1)}
-                    >
-                      −
-                    </button>
-                    <span className="quantity-value">{item.availableQuantity}</span>
-                    <button
-                      className="btn-sm btn-secondary"
-                      onClick={() => handleQuantityAdjust(item.id, 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div className="card-footer">
-                  <small>
-                    Last updated:{' '}
-                    {new Date(item.updatedAt || item.id).toLocaleDateString()}
-                  </small>
-                </div>
-              </div>
-            ))
-            }
-          </div>
-        )}
+        <button
+          className="inventory-compose-btn"
+          onClick={() => navigate('/inventory/new')}
+          disabled={!canCreate}
+          title={canCreate ? 'Create resource and item' : 'Requires InventoryManager, InventoryAdmin, or Admin'}
+        >
+          + Create
+        </button>
       </div>
+
+      <div className="inventory-search-wrap" role="search">
+        <span className="inventory-search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="text"
+          className="inventory-search-input"
+          placeholder="Search resources, resource tags, and items"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+        <span className="inventory-search-filter" aria-hidden="true">☰</span>
+      </div>
+
+      <div className="inventory-summary-grid">
+        <div className="inventory-summary-card">
+          <span>Items</span>
+          <strong>{items.length}</strong>
+        </div>
+        <div className="inventory-summary-card">
+          <span>Resources</span>
+          <strong>{resourceCount}</strong>
+        </div>
+        <div className="inventory-summary-card">
+          <span>Available Units</span>
+          <strong>{totalAvailable}</strong>
+        </div>
+        <div className="inventory-summary-card">
+          <span>Pending Units</span>
+          <strong>{totalPending}</strong>
+        </div>
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      {showInventoryLandingState ? (
+        <div className="inventory-empty-dashboard">
+          <img
+            className="inventory-empty-icon"
+            src="/inventory-empty.svg"
+            alt="Empty inventory"
+          />
+          <h2>There is no data here yet...</h2>
+          <p className="inventory-empty-message">
+            {itemsFetchFailed
+              ? 'We could not load items from the database right now.'
+              : 'Use Create to add your first resource and item.'}
+          </p>
+        </div>
+      ) : isDetailedDashboard ? (
+        detailedSection ? (
+          <InventoryTypeItemsPanel
+            title={detailedSection.typeName}
+            icon={detailedSection.icon}
+            items={detailedSection.items}
+            mode="detailed"
+            onOpenItem={(itemId) => navigate(`/inventory/items/${itemId}`)}
+          />
+        ) : (
+          <div className="inventory-empty-dashboard">
+            <h2>No items found for {decodedTypeName}</h2>
+            <p className="inventory-empty-message">Try a different Resource Type section from the main dashboard.</p>
+          </div>
+        )
+      ) : (
+        <div className="inventory-sections-grid">
+          {sections.map((section) => (
+            <InventoryTypeItemsPanel
+              key={section.typeName}
+              title={section.typeName}
+              icon={section.icon}
+              headingLink={`/inventory/dashboard/${encodeURIComponent(section.typeName)}`}
+              items={section.items}
+              mode="main"
+              onOpenItem={(itemId) => navigate(`/inventory/items/${itemId}`)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

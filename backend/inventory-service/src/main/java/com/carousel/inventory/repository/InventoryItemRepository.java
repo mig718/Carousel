@@ -1,7 +1,7 @@
 package com.carousel.inventory.repository;
 
 import com.carousel.inventory.domain.InventoryItem;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface InventoryItemRepository extends MongoRepository<InventoryItem, String> {
+public interface InventoryItemRepository extends JpaRepository<InventoryItem, String> {
 }

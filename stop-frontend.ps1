@@ -14,42 +14,39 @@ function Write-ColorOutput($color, $message) {
 Write-ColorOutput "Green" "=== Carousel Frontend Stop Script ==="
 Write-ColorOutput "Cyan" "Stopping at $(Get-Date)`n"
 
-# Try to find and kill frontend processes
-$processes = Get-Process | Where-Object { $_.Name -eq "node" -or $_.Name -eq "npm" }
-
-if ($processes) {
-    Write-ColorOutput "Yellow" "Found running Node.js/npm processes..."
-    foreach ($process in $processes) {
-        Write-ColorOutput "Yellow" "[>] Stopping process: $($process.Name) (PID: $($process.Id))"
-        try {
-            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-            Write-ColorOutput "Green" "[+] Process stopped"
-        } catch {
-            Write-ColorOutput "Red" "[-] Failed to stop process: $_"
+# Stop process bound to the frontend port only
+Write-ColorOutput "Yellow" "[>] Looking for process listening on port $FrontendPort..."
+try {
+    $listeners = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq $FrontendPort }
+    if ($listeners) {
+        $processIds = $listeners | Select-Object -ExpandProperty OwningProcess -Unique
+        foreach ($processId in $processIds) {
+            try {
+                $proc = Get-Process -Id $processId -ErrorAction Stop
+                Write-ColorOutput "Yellow" "[>] Stopping process using port ${FrontendPort}: $($proc.Name) (PID: $processId)"
+                Stop-Process -Id $processId -Force -ErrorAction Stop
+                Write-ColorOutput "Green" "[+] Stopped PID $processId"
+            } catch {
+                Write-ColorOutput "Red" "[-] Failed to stop PID ${processId}: $($_.Exception.Message)"
+            }
         }
+        Start-Sleep -Seconds 1
+    } else {
+        Write-ColorOutput "Yellow" "[i] No process is listening on port $FrontendPort"
     }
-    Start-Sleep -Seconds 2
-} else {
-    Write-ColorOutput "Yellow" "[i] No Node.js/npm processes found running"
+} catch {
+    Write-ColorOutput "Yellow" "[i] Could not query listeners via Get-NetTCPConnection: $($_.Exception.Message)"
 }
 
 # Verify port is free
 Write-ColorOutput "Yellow" "[>] Verifying port $FrontendPort is free..."
 
-try {
-    $portInUse = netstat -ano | Select-String ":$FrontendPort\s+LISTENING" | Select-Object -First 1
-    if ($portInUse) {
-        $pid = $portInUse -split '\s+' | Select-Object -Last 1
-        Write-ColorOutput "Yellow" "[!] Process still using port $FrontendPort (PID: $pid). Force stopping..."
-        Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-        Start-Sleep -Seconds 1
-        Write-ColorOutput "Green" "[+] Port $FrontendPort is now free"
-    } else {
-        Write-ColorOutput "Green" "[+] Port $FrontendPort is free"
-    }
-} catch {
-    Write-ColorOutput "Yellow" "[i] Could not verify port status, but processed stopped"
+if (Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -eq $FrontendPort }) {
+    Write-ColorOutput "Red" "[-] Port $FrontendPort is still in use."
+    exit 1
 }
+
+Write-ColorOutput "Green" "[+] Port $FrontendPort is free"
 
 Write-ColorOutput "Green" "[OK] Frontend stop completed"
 Write-ColorOutput "Yellow" "Log files available in: .\logs\"

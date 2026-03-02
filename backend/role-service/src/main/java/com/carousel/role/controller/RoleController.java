@@ -1,5 +1,6 @@
 package com.carousel.role.controller;
 
+import com.carousel.role.dto.RoleAssignmentDto;
 import com.carousel.role.dto.RoleAssignmentRequest;
 import com.carousel.role.dto.RoleDto;
 import com.carousel.role.service.RoleManagementService;
@@ -21,15 +22,9 @@ public class RoleController {
     }
 
     @GetMapping
-    @Operation(summary = "List roles", description = "List all available roles (predefined + custom)")
+    @Operation(summary = "List roles", description = "List all roles from the database")
     public ResponseEntity<List<RoleDto>> getRoles() {
         return ResponseEntity.ok(roleService.getAllRoles());
-    }
-
-    @GetMapping("/custom")
-    @Operation(summary = "List custom roles", description = "List only custom roles from database")
-    public ResponseEntity<List<RoleDto>> getCustomRoles() {
-        return ResponseEntity.ok(roleService.getCustomRoles());
     }
 
     @PostMapping
@@ -38,20 +33,26 @@ public class RoleController {
         return ResponseEntity.ok(roleService.createRole(request, requesterEmail));
     }
 
-    @PutMapping("/{roleName}")
+    @PutMapping("/{roleId}")
     @Operation(summary = "Update role", description = "Update role description - Admin only")
     public ResponseEntity<RoleDto> updateRole(
-            @PathVariable String roleName,
+            @PathVariable String roleId,
             @RequestBody RoleDto request,
             @RequestParam String requesterEmail) {
-        return ResponseEntity.ok(roleService.updateRole(roleName, request, requesterEmail));
+        return ResponseEntity.ok(roleService.updateRole(roleId, request, requesterEmail));
     }
 
-    @DeleteMapping("/{roleName}")
+    @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete role", description = "Delete role - Admin only")
-    public ResponseEntity<String> deleteRole(@PathVariable String roleName, @RequestParam String requesterEmail) {
-        roleService.deleteRole(roleName, requesterEmail);
+    public ResponseEntity<String> deleteRole(@PathVariable String roleId, @RequestParam String requesterEmail) {
+        roleService.deleteRole(roleId, requesterEmail);
         return ResponseEntity.ok("Role deleted successfully");
+    }
+
+    @GetMapping("/assignments")
+    @Operation(summary = "List role assignments", description = "List role assignments with user and role metadata - Admin only")
+    public ResponseEntity<List<RoleAssignmentDto>> getAssignments(@RequestParam String requesterEmail) {
+        return ResponseEntity.ok(roleService.getAllAssignments(requesterEmail));
     }
 
     @PostMapping("/assign")
@@ -83,7 +84,7 @@ public class RoleController {
     @PostMapping("/internal/assign-default")
     @Operation(summary = "Assign default role internally", description = "Internal endpoint for assigning default role")
     public ResponseEntity<String> assignDefaultRole(@RequestParam String userEmail) {
-        roleService.assignRoleInternal(userEmail, "ReadOnly");
+        roleService.assignDefaultRoleByEmail(userEmail);
         return ResponseEntity.ok("Default role assigned");
     }
 }

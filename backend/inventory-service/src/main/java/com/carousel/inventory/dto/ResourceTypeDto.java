@@ -7,17 +7,19 @@ public class ResourceTypeDto {
     private String icon;
     private String parentTypeId;
     private String parentTypeName;
+    private boolean editable;
 
     public ResourceTypeDto() {
     }
 
-    public ResourceTypeDto(String id, String name, String description, String icon, String parentTypeId, String parentTypeName) {
+    public ResourceTypeDto(String id, String name, String description, String icon, String parentTypeId, String parentTypeName, boolean editable) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.icon = icon;
         this.parentTypeId = parentTypeId;
         this.parentTypeName = parentTypeName;
+        this.editable = editable;
     }
 
     public String getId() {
@@ -66,5 +68,13 @@ public class ResourceTypeDto {
 
     public void setParentTypeName(String parentTypeName) {
         this.parentTypeName = parentTypeName;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 }
