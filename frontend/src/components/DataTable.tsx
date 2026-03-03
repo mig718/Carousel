@@ -88,6 +88,28 @@ const DataTable = React.forwardRef<DataTableHandle, DataTableProps>(({
   const [newRowCounter, setNewRowCounter] = React.useState<number>(0);
   const [newRows, setNewRows] = React.useState<string[]>([]); // Track temp IDs
   const [rowSaveFailures, setRowSaveFailures] = React.useState<Record<string, boolean>>({});
+  const [deleteToast, setDeleteToast] = React.useState<string | null>(null);
+  const deleteToastTimeoutRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (deleteToastTimeoutRef.current !== null) {
+        window.clearTimeout(deleteToastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showDeleteToast = () => {
+    setDeleteToast('Deleted successfully');
+    if (deleteToastTimeoutRef.current !== null) {
+      window.clearTimeout(deleteToastTimeoutRef.current);
+    }
+
+    deleteToastTimeoutRef.current = window.setTimeout(() => {
+      setDeleteToast(null);
+      deleteToastTimeoutRef.current = null;
+    }, 2200);
+  };
 
   const isCellEditing = (rowId: string, field: string) => {
     return activeCell?.rowId === rowId && activeCell?.field === field;
@@ -160,9 +182,10 @@ const DataTable = React.forwardRef<DataTableHandle, DataTableProps>(({
       setValidationState(prev => {
         const fieldValidations: Record<string, boolean> = {};
         columns.forEach(col => {
-          // Fields with default values are valid, others start invalid
           const hasDefault = newRowDefaults[col.key] !== undefined && newRowDefaults[col.key] !== '';
-          fieldValidations[col.key] = hasDefault;
+          // Optional fields should not block save when empty.
+          // Required fields are valid only when they have a non-empty default value.
+          fieldValidations[col.key] = col.required ? hasDefault : true;
         });
         return {
           ...prev,
@@ -356,6 +379,7 @@ const DataTable = React.forwardRef<DataTableHandle, DataTableProps>(({
     setDeletingId(rowId);
     try {
       await onRowDelete(rowId);
+      showDeleteToast();
     } catch (err) {
       console.error('Failed to delete:', err);
     } finally {
@@ -561,6 +585,12 @@ const DataTable = React.forwardRef<DataTableHandle, DataTableProps>(({
               {savingAllId ? '...' : 'Save All'}
             </button>
           )}
+        </div>
+      )}
+
+      {deleteToast && (
+        <div className="data-table-toast" role="status" aria-live="polite">
+          {deleteToast}
         </div>
       )}
     </div>

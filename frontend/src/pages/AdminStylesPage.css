@@ -1,0 +1,43 @@
+.admin-styles-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-styles-section {
+  border: 1px solid #dce7ff;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #ffffff, #f4f8ff);
+  padding: 14px;
+}
+
+.admin-styles-section h2 {
+  margin: 0 0 6px;
+  color: #1f3b63;
+}
+
+.admin-styles-hint {
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.admin-styles-inline-read {
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: #1f3b63;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.admin-styles-inline-input {
+  width: 100%;
+  border: 1px solid #cfd8ea;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+}

@@ -10,6 +10,7 @@ const RolesPage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [userRoleNames, setUserRoleNames] = useState<string[]>([]);
 
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDescription, setNewRoleDescription] = useState('');
@@ -23,6 +24,8 @@ const RolesPage: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
 
   const isAdmin = currentUser?.accessLevel === 'Admin';
+  const isPowerUser = userRoleNames.some((role) => role.toLowerCase() === 'poweruser');
+  const canManageRoles = !!isAdmin || isPowerUser;
 
   const roleNames = useMemo(() => roles.map((role) => role.name), [roles]);
   const defaultRoles: Role[] = useMemo(
@@ -30,6 +33,8 @@ const RolesPage: React.FC = () => {
       { name: 'Support', description: 'Full access to user management' },
       { name: 'ReadOnly', description: 'Read-only access' },
       { name: 'PowerUser', description: 'Elevated access to advanced functionality' },
+      { name: 'StylesUser', description: 'View style templates and required inventory inputs' },
+      { name: 'StylesManager', description: 'Create and manage style templates' },
     ],
     []
   );
@@ -65,7 +70,16 @@ const RolesPage: React.FC = () => {
       setLoading(false);
     }
 
-    if (me.accessLevel !== 'Admin') {
+    let myRoles: string[] = [];
+    try {
+      myRoles = await retry(() => roleService.getRolesForUser(requesterEmail));
+      setUserRoleNames(myRoles || []);
+    } catch {
+      setUserRoleNames([]);
+    }
+
+    const hasPowerUserRole = (myRoles || []).some((role) => role.toLowerCase() === 'poweruser');
+    if (me.accessLevel !== 'Admin' && !hasPowerUserRole) {
       return;
     }
 
@@ -205,7 +219,7 @@ const RolesPage: React.FC = () => {
     setRoles((prev) => prev.map((role) => role.name === roleName ? { ...role, description } : role));
   };
 
-  if (!loading && !isAdmin) {
+  if (!loading && !canManageRoles) {
     return <Navigate to="/dashboard" replace />;
   }
 

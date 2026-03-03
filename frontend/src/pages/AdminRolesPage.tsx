@@ -65,17 +65,17 @@ const AdminRolesPage: React.FC = () => {
     [roles]
   );
 
-  const findUserByLabel = (label: string) => userOptions.find((option) => option.label === label);
-  const findRoleByLabel = (label: string) => roleOptions.find((option) => option.label === label);
+  const findUserById = (id: string) => userOptions.find((option) => option.id === id);
+  const findRoleById = (id: string) => roleOptions.find((option) => option.id === id);
 
   const getDisplayUserName = (assignment: any): string => {
-    const matchingUser = users.find((user) => user.id === assignment.userId);
+    const matchingUser = users.find((user) => user.id === assignment.userId || user.email === assignment.userEmail);
     if (matchingUser) {
       return `${matchingUser.firstName || ''} ${matchingUser.lastName || ''}`.trim() || matchingUser.email || '';
     }
 
     const rawName = (assignment.userName || '').toString();
-    const cleanedName = rawName.replace(/\s*<[^>]+>\s*$/, '').trim();
+    const cleanedName = rawName.split('<')[0].replace(/\s+/g, ' ').trim();
     if (cleanedName) {
       return cleanedName;
     }
@@ -308,41 +308,37 @@ const AdminRolesPage: React.FC = () => {
         if (!context.isEditing) {
           return (
             <button type="button" className="assignment-inline-read" onClick={context.beginEdit}>
-              {row.userSelector || 'Select user'}
+              {row.userName || 'Select user'}
             </button>
           );
         }
 
         return (
-          <>
-            <input
-              autoFocus
-              list="role-assignment-user-options"
-              className="assignment-inline-input"
-              value={row.userSelector || ''}
-              onChange={(e) => {
-                const selected = findUserByLabel(e.target.value);
-                onCommit('userSelector', e.target.value, row.userSelector || '');
-                if (selected) {
-                  onCommit('userId', selected.id, row.userId || '');
-                  onCommit('userName', selected.name, row.userName || '');
-                  onCommit('userEmail', selected.email, row.userEmail || '');
-                  context.setFieldValidity(true);
-                } else {
-                  onCommit('userId', '', row.userId || '');
-                  onCommit('userEmail', '', row.userEmail || '');
-                  onCommit('userName', '', row.userName || '');
-                  context.setFieldValidity(false);
-                }
-              }}
-              onBlur={() => context.endEdit()}
-            />
-            <datalist id="role-assignment-user-options">
+          <select
+            autoFocus
+            className="assignment-inline-input"
+            value={row.userId || ''}
+            onChange={(e) => {
+              const selected = findUserById(e.target.value);
+              if (selected) {
+                onCommit('userId', selected.id, row.userId || '');
+                onCommit('userName', selected.name, row.userName || '');
+                onCommit('userEmail', selected.email, row.userEmail || '');
+                context.setFieldValidity(true);
+              } else {
+                onCommit('userId', '', row.userId || '');
+                onCommit('userEmail', '', row.userEmail || '');
+                onCommit('userName', '', row.userName || '');
+                context.setFieldValidity(false);
+              }
+            }}
+            onBlur={() => context.endEdit()}
+          >
+            <option value="">Select user</option>
               {userOptions.map((option) => (
-                <option key={option.id} value={option.label} />
-              ))}
-            </datalist>
-          </>
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         );
       },
     },
@@ -372,39 +368,35 @@ const AdminRolesPage: React.FC = () => {
         if (!context.isEditing) {
           return (
             <button type="button" className="assignment-inline-read" onClick={context.beginEdit}>
-              {row.roleSelector || 'Select role'}
+              {row.roleName || 'Select role'}
             </button>
           );
         }
 
         return (
-          <>
-            <input
-              autoFocus
-              list="role-assignment-role-options"
-              className="assignment-inline-input"
-              value={row.roleSelector || ''}
-              onChange={(e) => {
-                const selected = findRoleByLabel(e.target.value);
-                onCommit('roleSelector', e.target.value, row.roleSelector || '');
-                if (selected) {
-                  onCommit('roleId', selected.id, row.roleId || '');
-                  onCommit('roleName', selected.label, row.roleName || '');
-                  context.setFieldValidity(true);
-                } else {
-                  onCommit('roleId', '', row.roleId || '');
-                  onCommit('roleName', '', row.roleName || '');
-                  context.setFieldValidity(false);
-                }
-              }}
-              onBlur={() => context.endEdit()}
-            />
-            <datalist id="role-assignment-role-options">
+          <select
+            autoFocus
+            className="assignment-inline-input"
+            value={row.roleId || ''}
+            onChange={(e) => {
+              const selected = findRoleById(e.target.value);
+              if (selected) {
+                onCommit('roleId', selected.id, row.roleId || '');
+                onCommit('roleName', selected.label, row.roleName || '');
+                context.setFieldValidity(true);
+              } else {
+                onCommit('roleId', '', row.roleId || '');
+                onCommit('roleName', '', row.roleName || '');
+                context.setFieldValidity(false);
+              }
+            }}
+            onBlur={() => context.endEdit()}
+          >
+            <option value="">Select role</option>
               {roleOptions.map((option) => (
-                <option key={option.id} value={option.label} />
-              ))}
-            </datalist>
-          </>
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
         );
       },
     },
@@ -457,10 +449,8 @@ const AdminRolesPage: React.FC = () => {
               userId: '',
               userName: '',
               userEmail: '',
-              userSelector: '',
               roleId: '',
               roleName: '',
-              roleSelector: '',
             }}
           />
         </div>

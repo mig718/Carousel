@@ -220,6 +220,23 @@ export interface InventoryItemCustomTagRequest {
   graphic: TagGraphic;
 }
 
+export interface Style {
+  id: string;
+  name: string;
+  description: string;
+  imageUrls: string[];
+  requiredItemIds: string[];
+  requiredItemNames: string[];
+  editable: boolean;
+}
+
+export interface StyleRequest {
+  name: string;
+  description: string;
+  imageUrls?: string[];
+  requiredItemIds?: string[];
+}
+
 export interface AuditEvent {
   id: string;
   actorEmail: string;

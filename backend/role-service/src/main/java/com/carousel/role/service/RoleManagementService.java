@@ -46,7 +46,7 @@ public class RoleManagementService {
     }
 
     public RoleDto createRole(RoleDto request, String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
         validateRoleRequest(request);
 
         if (roleRepository.existsByNameIgnoreCase(request.getName())) {
@@ -58,7 +58,7 @@ public class RoleManagementService {
     }
 
     public RoleDto updateRole(String roleId, RoleDto request, String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
         validateRoleRequest(request);
 
         Role role = roleRepository.findById(roleId)
@@ -80,7 +80,7 @@ public class RoleManagementService {
     }
 
     public void deleteRole(String roleId, String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
 
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new RuntimeException("Role not found"));
@@ -94,7 +94,7 @@ public class RoleManagementService {
     }
 
     public void assignRole(RoleAssignmentRequest request, String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
         String resolvedUserId = resolveUserId(request);
         String resolvedRoleId = resolveRoleId(request);
         assignRoleInternal(resolvedUserId, resolvedRoleId);
@@ -112,7 +112,7 @@ public class RoleManagementService {
     }
 
     public void unassignRole(RoleAssignmentRequest request, String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
         String resolvedUserId = resolveUserId(request);
         String resolvedRoleId = resolveRoleId(request);
         UserRoleAssignment assignment = assignmentRepository
@@ -124,7 +124,7 @@ public class RoleManagementService {
 
     @Transactional(readOnly = true)
     public List<RoleAssignmentDto> getAllAssignments(String requesterEmail) {
-        validateAdmin(requesterEmail);
+        validateRoleManagementAccess(requesterEmail);
 
         List<UserDto> users = userServiceClient.getAllUsers(requesterEmail);
         Map<String, UserDto> userById = users.stream().collect(Collectors.toMap(UserDto::getId, user -> user, (first, second) -> first));
@@ -182,20 +182,12 @@ public class RoleManagementService {
 
         if (assignedRoleNames.isEmpty()) {
             if (isAdmin) {
-                return List.of("ReadOnly", "Support", "InventoryManager");
+                return List.of();
             }
             return List.of("ReadOnly");
         }
 
-        List<String> resolved = new ArrayList<>(assignedRoleNames);
-        if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("Support"))) {
-            addRoleIfExists(resolved, "Support");
-        }
-        if (isAdmin && resolved.stream().noneMatch(role -> role.equalsIgnoreCase("InventoryManager"))) {
-            addRoleIfExists(resolved, "InventoryManager");
-        }
-
-        return resolved;
+        return new ArrayList<>(assignedRoleNames);
     }
 
     public boolean userHasRole(String email, String roleName) {
@@ -281,10 +273,18 @@ public class RoleManagementService {
         }
     }
 
-    private void validateAdmin(String requesterEmail) {
+    private void validateRoleManagementAccess(String requesterEmail) {
         UserDto user = userServiceClient.getUserByEmail(requesterEmail);
-        if (user == null || user.getAccessLevel() == null || !"Admin".equalsIgnoreCase(user.getAccessLevel())) {
-            throw new RuntimeException("Only Admin users can manage roles");
+        if (user != null && user.getAccessLevel() != null && "Admin".equalsIgnoreCase(user.getAccessLevel())) {
+            return;
         }
+
+        List<String> userRoles = getRolesForUser(requesterEmail);
+        boolean hasPowerUserRole = userRoles.stream().anyMatch(role -> role.equalsIgnoreCase("PowerUser"));
+        if (hasPowerUserRole) {
+            return;
+        }
+
+        throw new RuntimeException("Only Admin or PowerUser users can manage roles");
     }
 }

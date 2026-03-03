@@ -37,7 +37,9 @@ const DashboardPage: React.FC = () => {
       try {
         const roles = await roleService.getRolesForUser(email);
         const hasSupportRole = roles.some((role) => role.toLowerCase() === 'support');
-        setCanManageUsers(isCurrentUserAdmin || hasSupportRole);
+        const hasPowerUserRole = roles.some((role) => role.toLowerCase() === 'poweruser');
+        setCanManageUsers(isCurrentUserAdmin || hasSupportRole || hasPowerUserRole);
+        setIsAdmin(isCurrentUserAdmin || hasPowerUserRole);
       } catch {
         setCanManageUsers(isCurrentUserAdmin);
       }
@@ -75,7 +77,7 @@ const DashboardPage: React.FC = () => {
             <h3>Users</h3>
             <p>View system users and update registration details</p>
             <button className="btn-primary" disabled={!canManageUsers} onClick={handleUsers}>
-              {canManageUsers ? 'Open Users' : 'Support/Admin only'}
+              {canManageUsers ? 'Open Users' : 'Support/PowerUser/Admin only'}
             </button>
           </div>
 
@@ -91,7 +93,7 @@ const DashboardPage: React.FC = () => {
             <h3>Roles</h3>
             <p>Create, edit, delete and assign roles</p>
             <button className="btn-primary" disabled={!isAdmin} onClick={handleRoles}>
-              {isAdmin ? 'Open Roles' : 'Admin only'}
+              {isAdmin ? 'Open Roles' : 'PowerUser/Admin only'}
             </button>
           </div>
         </div>

@@ -58,7 +58,7 @@ const SettingsInventoryPage: React.FC = () => {
 
   const roleSet = useMemo(() => new Set(roles.map((role) => role.toLowerCase())), [roles]);
   const hasRole = (name: string) => roleSet.has(name.toLowerCase());
-  const canAccess = isAdmin || hasRole('supportinventory');
+  const canAccess = isAdmin || hasRole('poweruser') || hasRole('supportinventory');
 
   if (!loading && !canAccess) {
     return <Navigate to="/dashboard" replace />;

@@ -18,6 +18,8 @@ import HomePage from './pages/HomePage';
 import InventoryPage from './pages/InventoryPage';
 import InventoryItemDetailsPage from './pages/InventoryItemDetailsPage';
 import InventoryCreateResourcePage from './pages/InventoryCreateResourcePage';
+import StylesPage from './pages/StylesPage';
+import StyleDetailsPage from './pages/StyleDetailsPage';
 import SearchPage from './pages/SearchPage';
 import NotImplementedPage from './pages/NotImplementedPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -162,6 +164,26 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <ProtectedLayout>
                 <InventoryItemDetailsPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/styles"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <StylesPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/styles/:styleId"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <StyleDetailsPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }

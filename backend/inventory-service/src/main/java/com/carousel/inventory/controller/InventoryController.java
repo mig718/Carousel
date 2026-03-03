@@ -100,13 +100,13 @@ public class InventoryController {
     }
 
     @PostMapping("/resources")
-    @Operation(summary = "Create resource", description = "Create resource - InventoryManager/InventoryAdmin/Admin only")
+    @Operation(summary = "Create resource", description = "Create resource - InventoryManager/PowerUser/Admin only")
     public ResponseEntity<ResourceDto> createResource(@RequestBody ResourceRequest request, @RequestParam String requesterEmail) {
         return ResponseEntity.ok(inventoryService.createResource(request, requesterEmail));
     }
 
     @PutMapping("/resources/{resourceId}")
-    @Operation(summary = "Update resource", description = "Update resource metadata - InventoryManager/InventoryAdmin/Admin only")
+    @Operation(summary = "Update resource", description = "Update resource metadata - InventoryManager/PowerUser/Admin only")
     public ResponseEntity<ResourceDto> updateResource(
             @PathVariable String resourceId,
             @RequestBody ResourceRequest request,
@@ -133,7 +133,7 @@ public class InventoryController {
     }
 
     @PutMapping("/items/{itemId}")
-    @Operation(summary = "Update inventory item", description = "Update inventory item details - InventoryManager/InventoryUser/InventoryAdmin/Admin")
+    @Operation(summary = "Update inventory item", description = "Update inventory item details - InventoryManager/InventoryUser/PowerUser/Admin")
     public ResponseEntity<InventoryItemDto> updateItem(
             @PathVariable String itemId,
             @RequestBody InventoryItemRequest request,
@@ -142,7 +142,7 @@ public class InventoryController {
     }
 
     @PatchMapping("/items/{itemId}/quantity")
-    @Operation(summary = "Adjust quantity", description = "Adjust available quantity by delta - InventoryManager/InventoryUser/InventoryAdmin/Admin")
+    @Operation(summary = "Adjust quantity", description = "Adjust available quantity by delta - InventoryManager/InventoryUser/PowerUser/Admin")
     public ResponseEntity<InventoryItemDto> adjustQuantity(
             @PathVariable String itemId,
             @RequestBody QuantityAdjustmentRequest request,
@@ -177,6 +177,40 @@ public class InventoryController {
     @Operation(summary = "Delete inventory item custom tag", description = "Delete reusable inventory item custom tag")
     public ResponseEntity<Void> deleteItemCustomTag(@PathVariable String tagId, @RequestParam String requesterEmail) {
         inventoryService.deleteItemCustomTag(tagId, requesterEmail);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/styles")
+    @Operation(summary = "Get styles", description = "List style templates for complete jewelry items")
+    public ResponseEntity<List<StyleDto>> getStyles(@RequestParam String requesterEmail) {
+        return ResponseEntity.ok(inventoryService.getStyles(requesterEmail));
+    }
+
+    @GetMapping("/styles/{styleId}")
+    @Operation(summary = "Get style details", description = "Fetch a single style template by ID")
+    public ResponseEntity<StyleDto> getStyleById(@PathVariable String styleId, @RequestParam String requesterEmail) {
+        return ResponseEntity.ok(inventoryService.getStyleById(styleId, requesterEmail));
+    }
+
+    @PostMapping("/styles")
+    @Operation(summary = "Create style", description = "Create a style template with images and required inventory items")
+    public ResponseEntity<StyleDto> createStyle(@RequestBody StyleRequest request, @RequestParam String requesterEmail) {
+        return ResponseEntity.ok(inventoryService.createStyle(request, requesterEmail));
+    }
+
+    @PutMapping("/styles/{styleId}")
+    @Operation(summary = "Update style", description = "Update style template details and required inventory items")
+    public ResponseEntity<StyleDto> updateStyle(
+            @PathVariable String styleId,
+            @RequestBody StyleRequest request,
+            @RequestParam String requesterEmail) {
+        return ResponseEntity.ok(inventoryService.updateStyle(styleId, request, requesterEmail));
+    }
+
+    @DeleteMapping("/styles/{styleId}")
+    @Operation(summary = "Delete style", description = "Delete a style template")
+    public ResponseEntity<Void> deleteStyle(@PathVariable String styleId, @RequestParam String requesterEmail) {
+        inventoryService.deleteStyle(styleId, requesterEmail);
         return ResponseEntity.noContent().build();
     }
 }

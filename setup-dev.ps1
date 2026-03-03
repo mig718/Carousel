@@ -48,7 +48,7 @@ $activeUsers = @(
         LastName = "Johnson"
         Password = "SecureTest@2024"
         AccessLevel = "Admin"
-        Roles = @("Support", "PowerUser", "InventoryManager", "InventoryAdmin")
+        Roles = @("Support", "PowerUser", "InventoryManager", "StylesManager")
         Description = "Admin user"
     },
     @{
@@ -84,8 +84,8 @@ $activeUsers = @(
         LastName = "Morris"
         Password = "SecureTest@2024"
         AccessLevel = "User"
-        Roles = @("InventoryAdmin", "InventoryManager")
-        Description = "Inventory admin"
+        Roles = @("InventoryManager", "StylesManager")
+        Description = "Inventory and styles manager"
     },
     @{
         Email = "isaac.turner@warehouse.io"
@@ -93,8 +93,8 @@ $activeUsers = @(
         LastName = "Turner"
         Password = "SecureTest@2024"
         AccessLevel = "User"
-        Roles = @("InventoryUser")
-        Description = "Inventory user"
+        Roles = @("PowerUser")
+        Description = "Power user"
     }
 )
 
@@ -199,7 +199,8 @@ INSERT INTO roles (id, name, description, editable) VALUES
   (gen_random_uuid()::text, 'PowerUser', 'Elevated access to advanced functionality', false),
   (gen_random_uuid()::text, 'InventoryManager', 'Manage inventory items and type metadata', false),
   (gen_random_uuid()::text, 'InventoryUser', 'Manage inventory items and quantities', false),
-  (gen_random_uuid()::text, 'InventoryAdmin', 'Inventory administration with type/subtype management', false);
+    (gen_random_uuid()::text, 'StylesUser', 'View style templates and required inventory links', false),
+    (gen_random_uuid()::text, 'StylesManager', 'Create and manage style templates', false);
 "@
 
     $userIdByEmail = @{}
@@ -478,7 +479,7 @@ Write-Host "  Admin Access:" -ForegroundColor Cyan
 Write-Host "    Email: alice.johnson@acmecorp.com"
 Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: Admin"
-Write-Host "    Roles: Support, PowerUser, InventoryManager, InventoryAdmin"
+Write-Host "    Roles: Support, PowerUser, InventoryManager, StylesManager"
 Write-Host ""
 Write-Host "  Support Access:" -ForegroundColor Cyan
 Write-Host "    Email: frank.martinez@supportteam.io"
@@ -498,17 +499,17 @@ Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: User"
 Write-Host "    Roles: ReadOnly"
 Write-Host ""
-Write-Host "  Inventory Admin Access:" -ForegroundColor Cyan
+Write-Host "  Inventory + Styles Manager Access:" -ForegroundColor Cyan
 Write-Host "    Email: ivy.morris@warehouse.io"
 Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: User"
-Write-Host "    Roles: InventoryAdmin, InventoryManager"
+Write-Host "    Roles: InventoryManager, StylesManager"
 Write-Host ""
-Write-Host "  Inventory User Access:" -ForegroundColor Cyan
+Write-Host "  PowerUser Access (Isaac):" -ForegroundColor Cyan
 Write-Host "    Email: isaac.turner@warehouse.io"
 Write-Host "    Password: SecureTest@2024"
 Write-Host "    AccessLevel: User"
-Write-Host "    Roles: InventoryUser"
+Write-Host "    Roles: PowerUser"
 Write-Host ""
 Write-Host "  Pending Admin Approval:" -ForegroundColor Yellow
 Write-Host "    david.brown@techstartup.io"

@@ -65,6 +65,12 @@
   text-align: center;
 }
 
+.users-container .data-table .table-header .table-cell:nth-child(4),
+.users-container .data-table .table-body .table-row > .table-cell:nth-child(4) {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .users-container .access-level-label.is-admin {
   background: #ffe5e5;
   color: #f87171;

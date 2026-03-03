@@ -3,6 +3,7 @@ import UsersPage from '../pages/UsersPage';
 import AdminRolesPage from '../pages/AdminRolesPage';
 import AdminInventoryPage from '../pages/AdminInventoryPage';
 import AdminUserActivityPage from '../pages/AdminUserActivityPage';
+import AdminStylesPage from '../pages/AdminStylesPage';
 
 export interface AdminResourceDefinition {
   id: string;
@@ -33,6 +34,13 @@ export const adminResourceRegistry: AdminResourceDefinition[] = [
     description: 'Direct resource and item table operations.',
     icon: '📦',
     component: AdminInventoryPage,
+  },
+  {
+    id: 'styles',
+    title: 'Styles',
+    description: 'Direct style template table operations and dependencies.',
+    icon: '🧷',
+    component: AdminStylesPage,
   },
   {
     id: 'activity',
