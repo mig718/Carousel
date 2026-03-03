@@ -179,7 +179,7 @@ const UsersPage: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const canAccess = useMemo(
-    () => isAdmin || roles.some((role) => role.toLowerCase() === 'support'),
+    () => isAdmin || roles.some((role) => ['support', 'poweruser'].includes(role.toLowerCase())),
     [isAdmin, roles]
   );
 
@@ -191,15 +191,17 @@ const UsersPage: React.FC = () => {
         setIsAdmin(adminAccess);
 
         let hasSupportRole = false;
+        let hasPowerUserRole = false;
         try {
           const userRoles = await roleService.getRolesForUser(requesterEmail);
           setRoles(userRoles);
           hasSupportRole = userRoles.some((role) => role.toLowerCase() === 'support');
+          hasPowerUserRole = userRoles.some((role) => role.toLowerCase() === 'poweruser');
         } catch {
           setRoles([]);
         }
 
-        const hasAccess = adminAccess || hasSupportRole;
+        const hasAccess = adminAccess || hasSupportRole || hasPowerUserRole;
         if (!hasAccess) {
           return;
         }

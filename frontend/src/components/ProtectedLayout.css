@@ -62,6 +62,10 @@
   background: #f5f7fa;
 }
 
+.layout-content h1 + p {
+  display: none;
+}
+
 .layout-footer {
   flex-shrink: 0;
   padding: 15px 20px;

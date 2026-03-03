@@ -28,13 +28,13 @@ public class RoleController {
     }
 
     @PostMapping
-    @Operation(summary = "Create role", description = "Create new role - Admin only")
+    @Operation(summary = "Create role", description = "Create new role - Admin or PowerUser")
     public ResponseEntity<RoleDto> createRole(@RequestBody RoleDto request, @RequestParam String requesterEmail) {
         return ResponseEntity.ok(roleService.createRole(request, requesterEmail));
     }
 
     @PutMapping("/{roleId}")
-    @Operation(summary = "Update role", description = "Update role description - Admin only")
+    @Operation(summary = "Update role", description = "Update role description - Admin or PowerUser")
     public ResponseEntity<RoleDto> updateRole(
             @PathVariable String roleId,
             @RequestBody RoleDto request,
@@ -43,27 +43,27 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @Operation(summary = "Delete role", description = "Delete role - Admin only")
+    @Operation(summary = "Delete role", description = "Delete role - Admin or PowerUser")
     public ResponseEntity<String> deleteRole(@PathVariable String roleId, @RequestParam String requesterEmail) {
         roleService.deleteRole(roleId, requesterEmail);
         return ResponseEntity.ok("Role deleted successfully");
     }
 
     @GetMapping("/assignments")
-    @Operation(summary = "List role assignments", description = "List role assignments with user and role metadata - Admin only")
+    @Operation(summary = "List role assignments", description = "List role assignments with user and role metadata - Admin or PowerUser")
     public ResponseEntity<List<RoleAssignmentDto>> getAssignments(@RequestParam String requesterEmail) {
         return ResponseEntity.ok(roleService.getAllAssignments(requesterEmail));
     }
 
     @PostMapping("/assign")
-    @Operation(summary = "Assign role", description = "Assign role to user - Admin only")
+    @Operation(summary = "Assign role", description = "Assign role to user - Admin or PowerUser")
     public ResponseEntity<String> assignRole(@RequestBody RoleAssignmentRequest request, @RequestParam String requesterEmail) {
         roleService.assignRole(request, requesterEmail);
         return ResponseEntity.ok("Role assigned successfully");
     }
 
     @DeleteMapping("/assign")
-    @Operation(summary = "Unassign role", description = "Remove role from user - Admin only")
+    @Operation(summary = "Unassign role", description = "Remove role from user - Admin or PowerUser")
     public ResponseEntity<String> unassignRole(@RequestBody RoleAssignmentRequest request, @RequestParam String requesterEmail) {
         roleService.unassignRole(request, requesterEmail);
         return ResponseEntity.ok("Role unassigned successfully");

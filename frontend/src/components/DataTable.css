@@ -294,6 +294,21 @@
   opacity: 0.6;
 }
 
+.data-table-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  background: rgba(44, 62, 80, 0.96);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  z-index: 1200;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .table-row {
     grid-template-columns: 1fr;

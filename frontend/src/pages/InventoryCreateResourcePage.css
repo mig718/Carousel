@@ -124,18 +124,25 @@
 }
 
 .inventory-create-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
 }
 
 .inventory-create-submit,
 .inventory-create-cancel {
-  min-height: 46px;
-  border-radius: 10px;
+  height: 38px;
+  min-width: 128px;
+  border-radius: 8px;
+  padding: 0 16px;
   border: 1px solid transparent;
   font-weight: 700;
+  font-size: 0.92rem;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .inventory-create-submit {
@@ -155,7 +162,17 @@
 
 @media (max-width: 900px) {
   .inventory-create-qty-grid,
-  .inventory-create-actions {
+  .inventory-create-qty-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-create-actions {
+    justify-content: stretch;
+  }
+
+  .inventory-create-submit,
+  .inventory-create-cancel {
+    flex: 1;
+    min-width: 0;
   }
 }

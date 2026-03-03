@@ -7,6 +7,7 @@ import com.carousel.inventory.domain.InventoryItemCustomTag;
 import com.carousel.inventory.domain.Resource;
 import com.carousel.inventory.domain.ResourceTag;
 import com.carousel.inventory.domain.ResourceType;
+import com.carousel.inventory.domain.Style;
 import com.carousel.inventory.domain.TagGraphic;
 import com.carousel.inventory.dto.*;
 import com.carousel.inventory.repository.InventoryItemRepository;
@@ -14,7 +15,9 @@ import com.carousel.inventory.repository.InventoryItemCustomTagRepository;
 import com.carousel.inventory.repository.ResourceRepository;
 import com.carousel.inventory.repository.ResourceTagRepository;
 import com.carousel.inventory.repository.ResourceTypeRepository;
+import com.carousel.inventory.repository.StyleRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,8 +34,10 @@ public class InventoryManagementService {
     private final ResourceTagRepository resourceTagRepository;
     private final InventoryItemRepository inventoryItemRepository;
     private final InventoryItemCustomTagRepository inventoryItemCustomTagRepository;
+    private final StyleRepository styleRepository;
     private final RoleServiceClient roleServiceClient;
     private final UserServiceClient userServiceClient;
+    private final JdbcTemplate jdbcTemplate;
 
     private static final List<String> ICON_LIBRARY = List.of("💎", "🪙", "🧩", "🔗", "⚙", "📏", "🧵", "📦");
     private static final String DEFAULT_TAG_COLOR = "#4F46E5";
@@ -78,22 +83,33 @@ public class InventoryManagementService {
             ResourceTagRepository resourceTagRepository,
             InventoryItemRepository inventoryItemRepository,
             InventoryItemCustomTagRepository inventoryItemCustomTagRepository,
+            StyleRepository styleRepository,
             RoleServiceClient roleServiceClient,
-            UserServiceClient userServiceClient
+                UserServiceClient userServiceClient,
+                JdbcTemplate jdbcTemplate
     ) {
         this.resourceRepository = resourceRepository;
         this.resourceTypeRepository = resourceTypeRepository;
         this.resourceTagRepository = resourceTagRepository;
         this.inventoryItemRepository = inventoryItemRepository;
         this.inventoryItemCustomTagRepository = inventoryItemCustomTagRepository;
+        this.styleRepository = styleRepository;
         this.roleServiceClient = roleServiceClient;
         this.userServiceClient = userServiceClient;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @PostConstruct
     void seedDefaults() {
+        ensureStyleTextColumns();
         seedResourceTypes();
         seedResourceTags();
+    }
+
+    private void ensureStyleTextColumns() {
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS inventory_styles ALTER COLUMN description TYPE TEXT");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS inventory_styles ALTER COLUMN image_urls TYPE TEXT");
+        jdbcTemplate.execute("ALTER TABLE IF EXISTS inventory_styles ALTER COLUMN required_item_ids TYPE TEXT");
     }
 
     public List<ResourceTypeDto> getResourceTypes(String requesterEmail) {
@@ -421,6 +437,81 @@ public class InventoryManagementService {
         return toItemDto(item);
     }
 
+    public List<StyleDto> getStyles(String requesterEmail) {
+        ensureStyleAccess(requesterEmail);
+
+        return styleRepository.findAll().stream()
+                .sorted(Comparator.comparing(Style::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(this::toStyleDto)
+                .toList();
+    }
+
+    public StyleDto getStyleById(String styleId, String requesterEmail) {
+        ensureStyleAccess(requesterEmail);
+
+        Style style = styleRepository.findById(styleId)
+                .orElseThrow(() -> new RuntimeException("Style not found"));
+
+        return toStyleDto(style);
+    }
+
+    public StyleDto createStyle(StyleRequest request, String requesterEmail) {
+        ensureStyleManagementAccess(requesterEmail);
+
+        String name = requiredText(request.getName(), "Style name is required");
+        String description = requiredText(request.getDescription(), "Style description is required");
+        List<String> imageUrls = normalizeImageUrls(request.getImageUrls());
+        List<String> requiredItemIds = resolveRequiredItemIds(request.getRequiredItemIds());
+
+        if (styleRepository.existsByNameIgnoreCase(name)) {
+            throw new RuntimeException("Style already exists");
+        }
+
+        Style style = new Style();
+        style.setName(name);
+        style.setDescription(description);
+        style.setImageUrls(joinMultiline(imageUrls));
+        style.setRequiredItemIds(joinIds(requiredItemIds));
+        style.setCreatedAt(LocalDateTime.now());
+        style.setUpdatedAt(LocalDateTime.now());
+
+        return toStyleDto(styleRepository.save(style));
+    }
+
+    public StyleDto updateStyle(String styleId, StyleRequest request, String requesterEmail) {
+        ensureStyleManagementAccess(requesterEmail);
+
+        Style existing = styleRepository.findById(styleId)
+                .orElseThrow(() -> new RuntimeException("Style not found"));
+
+        String name = requiredText(request.getName(), "Style name is required");
+        String description = requiredText(request.getDescription(), "Style description is required");
+        List<String> imageUrls = normalizeImageUrls(request.getImageUrls());
+        List<String> requiredItemIds = resolveRequiredItemIds(request.getRequiredItemIds());
+
+        Optional<Style> conflict = styleRepository.findByNameIgnoreCase(name);
+        if (conflict.isPresent() && !conflict.get().getId().equals(existing.getId())) {
+            throw new RuntimeException("Style already exists");
+        }
+
+        existing.setName(name);
+        existing.setDescription(description);
+        existing.setImageUrls(joinMultiline(imageUrls));
+        existing.setRequiredItemIds(joinIds(requiredItemIds));
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        return toStyleDto(styleRepository.save(existing));
+    }
+
+    public void deleteStyle(String styleId, String requesterEmail) {
+        ensureStyleManagementAccess(requesterEmail);
+
+        Style existing = styleRepository.findById(styleId)
+                .orElseThrow(() -> new RuntimeException("Style not found"));
+
+        styleRepository.delete(existing);
+    }
+
     public List<InventoryItemCustomTagDto> getItemCustomTags(String requesterEmail) {
         ensureInventoryAccess(requesterEmail);
 
@@ -573,7 +664,11 @@ public class InventoryManagementService {
             return;
         }
 
-        if (context.hasAnyRole("inventorymanager", "inventoryuser", "inventoryadmin")) {
+        if (context.hasAnyRole("poweruser")) {
+            return;
+        }
+
+        if (context.hasAnyRole("inventorymanager", "inventoryuser")) {
             return;
         }
 
@@ -587,11 +682,43 @@ public class InventoryManagementService {
             return;
         }
 
-        if (context.hasAnyRole("inventorymanager", "inventoryadmin")) {
+        if (context.hasAnyRole("poweruser")) {
+            return;
+        }
+
+        if (context.hasAnyRole("inventorymanager")) {
             return;
         }
 
         throw new RuntimeException("Insufficient role privileges to manage resources");
+    }
+
+    private void ensureStyleAccess(String requesterEmail) {
+        AuthorizationContext context = resolveAuthorizationContext(requesterEmail);
+
+        if (context.isAdmin) {
+            return;
+        }
+
+        if (context.hasAnyRole("poweruser", "stylesuser", "stylesmanager")) {
+            return;
+        }
+
+        throw new RuntimeException("Insufficient role privileges to access styles");
+    }
+
+    private void ensureStyleManagementAccess(String requesterEmail) {
+        AuthorizationContext context = resolveAuthorizationContext(requesterEmail);
+
+        if (context.isAdmin) {
+            return;
+        }
+
+        if (context.hasAnyRole("poweruser", "stylesmanager")) {
+            return;
+        }
+
+        throw new RuntimeException("Insufficient role privileges to manage styles");
     }
 
     private AuthorizationContext resolveAuthorizationContext(String requesterEmail) {
@@ -689,6 +816,51 @@ public class InventoryManagementService {
         String normalizedId = requiredText(resourceId, requiredMessage);
         return resourceRepository.findById(normalizedId)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
+    }
+
+    private List<String> resolveRequiredItemIds(List<String> requiredItemIds) {
+        List<String> normalizedIds = parseNormalizedIds(requiredItemIds);
+        if (normalizedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Set<String> existingIds = inventoryItemRepository.findAllById(normalizedIds).stream()
+                .map(InventoryItem::getId)
+                .collect(Collectors.toSet());
+
+        for (String id : normalizedIds) {
+            if (!existingIds.contains(id)) {
+                throw new RuntimeException("Inventory item not found for style requirement: " + id);
+            }
+        }
+
+        return normalizedIds;
+    }
+
+    private List<String> normalizeImageUrls(List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return List.of();
+        }
+
+        return imageUrls.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private List<String> parseNormalizedIds(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+
+        return values.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .toList();
     }
 
     private String requiredText(String text, String message) {
@@ -823,6 +995,29 @@ public class InventoryManagementService {
                 .collect(Collectors.joining(","));
     }
 
+    private List<String> parseMultiline(String value) {
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(value.split("\\R"))
+                .map(String::trim)
+                .filter(item -> !item.isBlank())
+                .toList();
+    }
+
+    private String joinMultiline(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+
+        return values.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.joining("\n"));
+    }
+
     private String joinTags(List<String> tags) {
         if (tags == null || tags.isEmpty()) {
             return "";
@@ -877,6 +1072,27 @@ public class InventoryManagementService {
                 resource.getDescription()
         );
     }
+
+            private StyleDto toStyleDto(Style style) {
+            List<String> requiredItemIds = parseIdCsv(style.getRequiredItemIds());
+            Map<String, String> itemNameById = inventoryItemRepository.findAllById(requiredItemIds).stream()
+                .collect(Collectors.toMap(InventoryItem::getId, InventoryItem::getResourceType, (left, right) -> left));
+
+            List<String> requiredItemNames = requiredItemIds.stream()
+                .map(itemNameById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+            return new StyleDto(
+                style.getId(),
+                style.getName(),
+                style.getDescription(),
+                parseMultiline(style.getImageUrls()),
+                requiredItemIds,
+                requiredItemNames,
+                true
+            );
+            }
 
     private InventoryItemDto toItemDto(InventoryItem item) {
         List<String> customTagIds = parseIdCsv(item.getCustomTagIds());

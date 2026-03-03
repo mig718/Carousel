@@ -26,7 +26,7 @@ const HomePage: React.FC = () => {
             <li>
               <span className="feature-icon">🔐</span>
               <span className="feature-title">Role-Based Access Control</span>
-              <span className="feature-desc">Assign roles including Support, PowerUser, ReadOnly, InventoryManager, and InventoryAdmin</span>
+              <span className="feature-desc">Assign roles including Support, PowerUser, ReadOnly, InventoryManager, StylesUser, and StylesManager</span>
             </li>
             <li>
               <span className="feature-icon">💎</span>

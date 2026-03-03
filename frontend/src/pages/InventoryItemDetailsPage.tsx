@@ -41,7 +41,7 @@ const InventoryItemDetailsPage: React.FC = () => {
 
         const roleSet = new Set((roles || []).map((role) => role.toLowerCase()));
         const isAdmin = currentUser.accessLevel === 'Admin';
-        const canEditItem = isAdmin || roleSet.has('inventorymanager') || roleSet.has('inventoryadmin');
+        const canEditItem = isAdmin || roleSet.has('poweruser') || roleSet.has('inventorymanager');
 
         setItem(itemData);
         setCustomTags(allTags || []);
@@ -71,6 +71,33 @@ const InventoryItemDetailsPage: React.FC = () => {
       .filter((tag): tag is { id: string; name: string } => !!tag.name)
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [customTags, selectedTagIds]);
+
+  const availableCount = Math.max(0, Number(availableQuantity) || 0);
+  const pendingCount = Math.max(0, Number(pendingQuantity) || 0);
+
+  const quantityStatus = useMemo(() => {
+    if (availableCount > 0) {
+      return {
+        key: 'available',
+        label: 'Available',
+        description: 'This item is in stock and can be used right away.',
+      };
+    }
+
+    if (pendingCount > 0) {
+      return {
+        key: 'pending',
+        label: 'Pending Only',
+        description: 'No available units right now, but incoming quantity is pending.',
+      };
+    }
+
+    return {
+      key: 'unavailable',
+      label: 'Unavailable',
+      description: 'No available or pending quantity for this item.',
+    };
+  }, [availableCount, pendingCount]);
 
   const onToggleTag = (tagId: string) => {
     if (!canEdit) {
@@ -155,16 +182,26 @@ const InventoryItemDetailsPage: React.FC = () => {
           ← Back to Inventory
         </button>
         <h1>{item.resourceIcon || '📦'} Item</h1>
-        <p>
-          Resource: {item.resourceType} • Resource Type: {item.resourceCategory}
+        <div className="inventory-item-resource-focus">
+          <span className="inventory-item-resource-label">Resource</span>
+          <p className="inventory-item-resource-title">{item.resourceType}</p>
+        </div>
+        <p className="inventory-item-resource-meta">
+          Resource Type: {item.resourceCategory}
           {item.resourceSubType ? ` • Resource Tags: ${item.resourceSubType}` : ''}
         </p>
       </div>
 
       {error && <div className="inventory-item-error">{error}</div>}
 
-      <section className="inventory-item-panel">
-        <h2>Item Quantity</h2>
+      <section className={`inventory-item-panel inventory-item-qty-panel inventory-item-qty-${quantityStatus.key}`}>
+        <div className="inventory-item-qty-header">
+          <h2>Quantity</h2>
+          <span className={`inventory-item-qty-badge inventory-item-qty-badge-${quantityStatus.key}`}>
+            {quantityStatus.label}
+          </span>
+        </div>
+        <p className="inventory-item-qty-status-text">{quantityStatus.description}</p>
         <div className="inventory-item-qty-grid">
           <label>
             Available
@@ -174,6 +211,7 @@ const InventoryItemDetailsPage: React.FC = () => {
               value={availableQuantity}
               onChange={(e) => setAvailableQuantity(e.target.value)}
               disabled={!canEdit || saving}
+              className="inventory-item-number-input"
             />
           </label>
 
@@ -185,13 +223,14 @@ const InventoryItemDetailsPage: React.FC = () => {
               value={pendingQuantity}
               onChange={(e) => setPendingQuantity(e.target.value)}
               disabled={!canEdit || saving}
+              className="inventory-item-number-input"
             />
           </label>
         </div>
       </section>
 
       <section className="inventory-item-panel">
-        <h2>Inventory Custom Tags</h2>
+        <h2>Tags</h2>
 
         <div className="inventory-item-selected-tags">
           {selectedTagNames.length === 0 ? (
@@ -256,7 +295,7 @@ const InventoryItemDetailsPage: React.FC = () => {
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
         <button type="button" className="inventory-item-cancel" onClick={() => navigate('/inventory')} disabled={saving}>
-          Done
+          Cancel
         </button>
       </div>
     </div>

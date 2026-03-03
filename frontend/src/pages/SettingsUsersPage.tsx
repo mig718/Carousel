@@ -59,7 +59,7 @@ const SettingsUsersPage: React.FC = () => {
 
   const roleSet = useMemo(() => new Set(roles.map((role) => role.toLowerCase())), [roles]);
   const hasRole = (name: string) => roleSet.has(name.toLowerCase());
-  const canAccess = isAdmin || hasRole('supportusers');
+  const canAccess = isAdmin || hasRole('poweruser') || hasRole('supportusers');
 
   if (!loading && !canAccess) {
     return <Navigate to="/dashboard" replace />;

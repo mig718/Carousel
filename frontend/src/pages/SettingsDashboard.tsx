@@ -58,9 +58,10 @@ const SettingsDashboard: React.FC = () => {
   const roleSet = useMemo(() => new Set(roles.map((role) => role.toLowerCase())), [roles]);
   const hasRole = (name: string) => roleSet.has(name.toLowerCase());
 
-  const canViewSettings = isAdmin || hasRole('support');
-  const showUsersCard = isAdmin || hasRole('supportusers');
-  const showInventoryCard = isAdmin || hasRole('supportinventory');
+  const isPowerUser = hasRole('poweruser');
+  const canViewSettings = isAdmin || isPowerUser || hasRole('support');
+  const showUsersCard = isAdmin || isPowerUser || hasRole('supportusers');
+  const showInventoryCard = isAdmin || isPowerUser || hasRole('supportinventory');
 
   if (!loading && !canViewSettings) {
     return <Navigate to="/dashboard" replace />;

@@ -52,20 +52,25 @@ const InventoryPage: React.FC = () => {
     setItemsFetchFailed(false);
 
     try {
-      const [itemsData, resourcesData, currentUser, roles] = await Promise.all([
-        inventoryService.getItems(userEmail),
-        inventoryService.getResources(userEmail),
+      const [currentUser, roles] = await Promise.all([
         userService.getCurrentUser(userEmail),
         roleService.getRolesForUser(userEmail),
       ]);
 
-      const roleSet = new Set((roles || []).map((role) => role.toLowerCase()));
+      const normalizeRole = (role: string) => role.toLowerCase().replace(/[\s_-]/g, '');
+      const roleSet = new Set((roles || []).map((role) => normalizeRole(role)));
       const isAdmin = currentUser.accessLevel === 'Admin';
-      const canCreateOrManage = isAdmin || roleSet.has('inventorymanager') || roleSet.has('inventoryadmin');
+      const canCreateOrManage = isAdmin || roleSet.has('poweruser') || roleSet.has('inventorymanager') || roleSet.has('inventoryadmin');
+
+      setCanCreate(canCreateOrManage);
+
+      const [itemsData, resourcesData] = await Promise.all([
+        inventoryService.getItems(userEmail),
+        inventoryService.getResources(userEmail),
+      ]);
 
       setItems(itemsData || []);
       setResources(resourcesData);
-      setCanCreate(canCreateOrManage);
       setItemsFetchFailed(false);
       setError(null);
     } catch (err) {
@@ -173,7 +178,7 @@ const InventoryPage: React.FC = () => {
           className="inventory-compose-btn"
           onClick={() => navigate('/inventory/new')}
           disabled={!canCreate}
-          title={canCreate ? 'Create resource and item' : 'Requires InventoryManager, InventoryAdmin, or Admin'}
+          title={canCreate ? 'Create resource and item' : 'Requires InventoryManager, PowerUser, or Admin'}
         >
           + Create
         </button>

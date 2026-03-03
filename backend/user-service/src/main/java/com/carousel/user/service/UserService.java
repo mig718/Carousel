@@ -295,7 +295,12 @@ public class UserService {
 
         try {
             Boolean hasSupportRole = roleServiceClient.userHasRole(requesterEmail, "Support");
-            return Boolean.TRUE.equals(hasSupportRole);
+            if (Boolean.TRUE.equals(hasSupportRole)) {
+                return true;
+            }
+
+            Boolean hasPowerUserRole = roleServiceClient.userHasRole(requesterEmail, "PowerUser");
+            return Boolean.TRUE.equals(hasPowerUserRole);
         } catch (Exception e) {
             return false;
         }

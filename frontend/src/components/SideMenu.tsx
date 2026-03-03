@@ -67,7 +67,7 @@ const SideMenu: React.FC = () => {
   const hasRole = (roleName: string) => roleSet.has(roleName.toLowerCase());
 
   const showAdmin = isAdmin;
-  const showSettings = isAdmin || hasRole('support');
+  const showSettings = isAdmin || hasRole('poweruser') || hasRole('support');
 
   const iconHome = (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -88,6 +88,17 @@ const SideMenu: React.FC = () => {
       <path d="M4 7.5l8-4 8 4-8 4-8-4z" />
       <path d="M4 7.5v9l8 4 8-4v-9" />
       <path d="M12 11.5v9" />
+    </svg>
+  );
+
+  const iconStyles = (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 12h16" />
+      <path d="M12 4v16" />
+      <circle cx="7" cy="7" r="2" />
+      <circle cx="17" cy="7" r="2" />
+      <circle cx="7" cy="17" r="2" />
+      <circle cx="17" cy="17" r="2" />
     </svg>
   );
 
@@ -138,6 +149,10 @@ const SideMenu: React.FC = () => {
           <NavLink to="/inventory" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
             <span className="menu-icon">{iconInventory}</span>
             <span className="menu-text">Inventory</span>
+          </NavLink>
+          <NavLink to="/styles" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
+            <span className="menu-icon">{iconStyles}</span>
+            <span className="menu-text">Styles</span>
           </NavLink>
         </div>
 

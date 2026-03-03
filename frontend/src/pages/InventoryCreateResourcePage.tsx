@@ -37,7 +37,7 @@ const InventoryCreateResourcePage: React.FC = () => {
 
         const roleSet = new Set((roles || []).map((role) => role.toLowerCase()));
         const isAdmin = userData.accessLevel === 'Admin';
-        const canCreate = isAdmin || roleSet.has('inventorymanager') || roleSet.has('inventoryadmin');
+        const canCreate = isAdmin || roleSet.has('poweruser') || roleSet.has('inventorymanager');
 
         setResourceTypes(typeData || []);
         setResourceTags(tagData || []);
@@ -236,7 +236,7 @@ const InventoryCreateResourcePage: React.FC = () => {
 
         <div className="inventory-create-actions">
           <button type="submit" className="inventory-create-submit" disabled={!canCreateResource || saving}>
-            {saving ? 'Creating...' : 'Create Resource + Item'}
+            {saving ? 'Adding...' : 'Add to Inventory'}
           </button>
           <button type="button" className="inventory-create-cancel" onClick={() => navigate('/inventory')} disabled={saving}>
             Cancel

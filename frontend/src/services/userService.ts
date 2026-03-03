@@ -18,6 +18,8 @@ import {
   ResourceCatalog,
   InventoryItem,
   InventoryItemRequest,
+  Style,
+  StyleRequest,
   ResourceType,
   ResourceTypeRequest,
   ResourceTag,
@@ -292,6 +294,30 @@ export const inventoryService = {
 
   deleteItemCustomTag: async (requesterEmail: string, tagId: string): Promise<void> => {
     await apiClient.delete(`/inventory/item-custom-tags/${encodeURIComponent(tagId)}`, { params: { requesterEmail } });
+  },
+
+  getStyles: async (requesterEmail: string): Promise<Style[]> => {
+    const response = await apiClient.get<Style[]>('/inventory/styles', { params: { requesterEmail } });
+    return response.data;
+  },
+
+  getStyleById: async (requesterEmail: string, styleId: string): Promise<Style> => {
+    const response = await apiClient.get<Style>(`/inventory/styles/${encodeURIComponent(styleId)}`, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  createStyle: async (requesterEmail: string, request: StyleRequest): Promise<Style> => {
+    const response = await apiClient.post<Style>('/inventory/styles', request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  updateStyle: async (requesterEmail: string, styleId: string, request: StyleRequest): Promise<Style> => {
+    const response = await apiClient.put<Style>(`/inventory/styles/${encodeURIComponent(styleId)}`, request, { params: { requesterEmail } });
+    return response.data;
+  },
+
+  deleteStyle: async (requesterEmail: string, styleId: string): Promise<void> => {
+    await apiClient.delete(`/inventory/styles/${encodeURIComponent(styleId)}`, { params: { requesterEmail } });
   },
 };
 
