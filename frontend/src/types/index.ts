@@ -252,3 +252,88 @@ export interface AuditEvent {
   details: string;
   createdAt: string;
 }
+
+export interface FlowAction {
+  id: string;
+  stateId: string;
+  name: string;
+  actionType: string;
+  awaitable: boolean;
+  requiresApproval: boolean;
+  approvalType?: string;
+  approvalRole?: string;
+  nextStateId?: string;
+  predefined: boolean;
+}
+
+export interface FlowState {
+  id: string;
+  name: string;
+  color: string;
+  sortOrder: number;
+  actions: FlowAction[];
+}
+
+export interface Flow {
+  id: string;
+  name: string;
+  description?: string;
+  initialStateId?: string;
+  states: FlowState[];
+}
+
+export interface CreateFlowRequest {
+  name: string;
+  description?: string;
+}
+
+export interface CreateFlowStateRequest {
+  name: string;
+  color?: string;
+  sortOrder?: number;
+}
+
+export interface CreateFlowActionRequest {
+  name: string;
+  actionType: string;
+  awaitable?: boolean;
+  requiresApproval?: boolean;
+  approvalType?: string;
+  approvalRole?: string;
+  nextStateId?: string;
+  predefined?: boolean;
+}
+
+export interface FlowActionTemplate {
+  id: string;
+  name: string;
+  actionType: string;
+  awaitable: boolean;
+  requiresApproval: boolean;
+  approvalType?: string;
+  approvalRole?: string;
+  predefined: boolean;
+}
+
+export interface CreateFlowActionTemplateRequest {
+  name: string;
+  actionType: string;
+  awaitable?: boolean;
+  requiresApproval?: boolean;
+  approvalType?: string;
+  approvalRole?: string;
+}
+
+export interface RequiredFlowActionsResponse {
+  flowId: string;
+  stateId: string;
+  actions: FlowAction[];
+}
+
+export interface NextFlowStateResponse {
+  flowId: string;
+  currentStateId: string;
+  actionId?: string;
+  nextStateId?: string;
+  nextStateName?: string;
+}

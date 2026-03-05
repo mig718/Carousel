@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: styles-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/carousel_roles}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+server:
+  port: 8007
+  servlet:
+    context-path: /api/inventory
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    instance-id: ${spring.application.name}:${random.value}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+carousel:
+  clients:
+    user-service-url: ${CAROUSEL_CLIENTS_USER_SERVICE_URL:http://localhost:8002}
+    role-service-url: ${CAROUSEL_CLIENTS_ROLE_SERVICE_URL:http://localhost:8004}
+    inventory-service-url: ${CAROUSEL_CLIENTS_INVENTORY_SERVICE_URL:http://localhost:8005}

@@ -83,6 +83,9 @@ OpenAPI specifications are auto-generated and available at each service's Swagge
 - **Auth Service**: http://localhost:8001/api/auth/swagger-ui.html
 - **User Service**: http://localhost:8002/api/users/swagger-ui.html
 - **Approval Service**: http://localhost:8003/api/approvals/swagger-ui.html
+- **Role Service**: http://localhost:8004/api/roles/swagger-ui.html
+- **Inventory Service**: http://localhost:8005/api/inventory/swagger-ui.html
+- **Styles Service**: http://localhost:8007/api/inventory/swagger-ui.html
 
 ## API Endpoints
 
@@ -197,6 +200,9 @@ Carousel/
 â”‚   â”œâ”€â”€ auth-service/
 â”‚   â”œâ”€â”€ user-service/
 â”‚   â”œâ”€â”€ approval-service/
+â”‚   â”œâ”€â”€ role-service/
+â”‚   â”œâ”€â”€ inventory-service/
+â”‚   â”œâ”€â”€ styles-service/
 â”‚   â”œâ”€â”€ api-gateway/
 â”‚   â””â”€â”€ pom.xml (parent)
 â”œâ”€â”€ frontend/

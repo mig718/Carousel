@@ -32,6 +32,7 @@ public class JwtAuthenticationGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/validate",
             "/api/auth/verify-email",
             "/api/users/register",
+            "/api/flows",
             "/api/users/verify",
             "/api/health",
             "/health",
@@ -95,6 +96,7 @@ public class JwtAuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
         return path.startsWith("/swagger-ui/")
             || path.startsWith("/webjars/")
+                || path.startsWith("/api/flows/")
                 || path.startsWith("/v3/api-docs")
                 || path.endsWith("/v3/api-docs")
                 || path.endsWith("/health");

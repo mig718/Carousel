@@ -1,4 +1,4 @@
-package com.carousel.inventory.dto;
+package com.carousel.styles.dto;
 
 import java.util.List;
 

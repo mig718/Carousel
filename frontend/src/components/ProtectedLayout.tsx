@@ -31,6 +31,8 @@ const ProtectedLayout: React.FC<ProtectedLayoutProps> = ({ children, footerConte
       'users': 'Users',
       'roles': 'Roles',
       'inventory': 'Inventory',
+      'flows': 'Flows',
+      'actions': 'Actions',
       'search': 'Search',
       'settings': 'Settings',
       'new': 'New User',

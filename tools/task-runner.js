@@ -170,7 +170,7 @@ function usage() {
   npm build auth
   npm setup dev
   npm restart auth
-  npm run restart -- <all|backend|frontend|auth|user|approve|roles|inventory|gateway>
+  npm run restart -- <all|backend|frontend|auth|user|approve|roles|inventory|styles|flow|gateway>
   npm run compose:app:up
   npm run compose:debug:up
   npm run postgres:start`);
@@ -178,7 +178,7 @@ function usage() {
 
 const invocationArgs = resolveInvocationArgs();
 const [group, sub, third] = invocationArgs;
-const serviceTargets = ['auth', 'user', 'approve', 'roles', 'inventory', 'gateway'];
+const serviceTargets = ['auth', 'user', 'approve', 'roles', 'inventory', 'styles', 'flow', 'gateway'];
 
 if (!group) {
   usage();

@@ -77,6 +77,8 @@ services:
       - approval-service
       - role-service
       - inventory-service
+      - styles-service
+      - flow-service
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
       SPRING_DATASOURCE_USERNAME: postgres
@@ -109,6 +111,40 @@ services:
     container_name: inventory-service
     ports:
       - "8005:8005"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    networks:
+      - carousel-network
+
+  styles-service:
+    build:
+      context: ./backend/styles-service
+      dockerfile: Dockerfile
+    container_name: styles-service
+    ports:
+      - "8007:8007"
+    depends_on:
+      - postgres
+      - inventory-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/carousel_roles
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      CAROUSEL_CLIENTS_INVENTORY_SERVICE_URL: http://inventory-service:8005
+    networks:
+      - carousel-network
+
+  flow-service:
+    build:
+      context: ./backend/flow-service
+      dockerfile: Dockerfile
+    container_name: flow-service
+    ports:
+      - "8008:8008"
     depends_on:
       - postgres
     environment:

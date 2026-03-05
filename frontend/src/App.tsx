@@ -20,6 +20,9 @@ import InventoryItemDetailsPage from './pages/InventoryItemDetailsPage';
 import InventoryCreateResourcePage from './pages/InventoryCreateResourcePage';
 import StylesPage from './pages/StylesPage';
 import StyleDetailsPage from './pages/StyleDetailsPage';
+import FlowsPage from './pages/FlowsPage';
+import CreateFlowPage from './pages/CreateFlowPage';
+import FlowActionsPage from './pages/FlowActionsPage';
 import SearchPage from './pages/SearchPage';
 import NotImplementedPage from './pages/NotImplementedPage';
 import AdminDashboard from './pages/AdminDashboard';
@@ -184,6 +187,36 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <ProtectedLayout>
                 <StyleDetailsPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/flows"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <FlowsPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/flows/create"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <CreateFlowPage />
+              </ProtectedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/flows/actions"
+          element={
+            <ProtectedRoute>
+              <ProtectedLayout>
+                <FlowActionsPage />
               </ProtectedLayout>
             </ProtectedRoute>
           }

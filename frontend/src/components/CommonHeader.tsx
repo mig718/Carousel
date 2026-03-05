@@ -12,6 +12,8 @@ const CommonHeader: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const email = useSelector((state: RootState) => state.auth.email);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isAdmin = user?.accessLevel === 'Admin';
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -44,7 +46,7 @@ const CommonHeader: React.FC = () => {
   };
 
   return (
-    <header className="common-header">
+    <header className={`common-header${isAdmin ? ' is-admin' : ''}`}>
       <button className="logo-container" onClick={() => navigate('/home')}>
         <img src="/carousel-logo.svg" alt="Carousel" className="carousel-icon-img" />
         <h1 className="carousel-title">carousel</h1>
@@ -53,6 +55,7 @@ const CommonHeader: React.FC = () => {
       <div className="header-spacer"></div>
 
       <div className="header-profile">
+        {isAdmin && <span className="admin-label">Admin</span>}
         <div className="profile-menu-container" ref={profileMenuRef}>
           <button
             className="profile-icon-btn"

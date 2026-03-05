@@ -3,7 +3,7 @@
 #   ./launch.ps1                # Launch backend then frontend
 #   ./launch.ps1 frontend       # Launch only frontend
 #   ./launch.ps1 backend        # Launch all backend services
-#   ./launch.ps1 auth|user|approve|gateway   # Launch only specified backend service
+#   ./launch.ps1 <shortcut>     # Launch one backend service by shortcut
 
 param(
     [string]$Target
@@ -42,10 +42,14 @@ switch ($Target.ToLower()) {
     "auth" { Start-Backend "auth"; break }
     "user" { Start-Backend "user"; break }
     "approve" { Start-Backend "approve"; break }
+    "roles" { Start-Backend "roles"; break }
+    "inventory" { Start-Backend "inventory"; break }
+    "styles" { Start-Backend "styles"; break }
+    "flow" { Start-Backend "flow"; break }
     "gateway" { Start-Backend "gateway"; break }
     default {
         Write-Host "[-] Unknown target: $Target" -ForegroundColor Red
-        Write-Host "Valid options: (none), frontend, backend, auth, user, approve, gateway" -ForegroundColor Yellow
+        Write-Host "Valid options: (none), frontend, backend, auth, user, approve, roles, inventory, styles, flow, gateway" -ForegroundColor Yellow
         exit 1
     }
 }

@@ -7,7 +7,7 @@ function Write-ColorOutput($color, $message) {
     Write-Host $message -ForegroundColor $color
 }
 
-$backendPorts = @(8000, 8001, 8002, 8003, 8004)
+$backendPorts = @(8000, 8001, 8002, 8003, 8004, 8005, 8007, 8008)
 $stoppedPids = @()
 
 Write-ColorOutput "Yellow" "Stopping Carousel backend services..."
@@ -28,7 +28,7 @@ if ($connections) {
         }
     }
 } else {
-    Write-ColorOutput "Yellow" "No active listeners found on backend ports 8000-8004."
+    Write-ColorOutput "Yellow" "No active listeners found on backend ports 8000-8008."
 }
 
 # Stop remaining Carousel backend Java/Maven launcher processes

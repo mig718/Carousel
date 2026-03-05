@@ -26,7 +26,17 @@ import {
   ResourceTagRequest,
   InventoryItemCustomTag,
   InventoryItemCustomTagRequest,
-  TagGraphicOption
+  TagGraphicOption,
+  Flow,
+  FlowState,
+  FlowAction,
+  CreateFlowRequest,
+  CreateFlowStateRequest,
+  CreateFlowActionRequest,
+  FlowActionTemplate,
+  CreateFlowActionTemplateRequest,
+  RequiredFlowActionsResponse,
+  NextFlowStateResponse
 } from '../types';
 
 export const authService = {
@@ -339,5 +349,60 @@ export const auditService = {
         requesterEmail,
       },
     });
+  },
+};
+
+export const flowService = {
+  getFlows: async (): Promise<Flow[]> => {
+    const response = await apiClient.get<Flow[]>('/flows');
+    return response.data;
+  },
+
+  getFlowById: async (flowId: string): Promise<Flow> => {
+    const response = await apiClient.get<Flow>(`/flows/${encodeURIComponent(flowId)}`);
+    return response.data;
+  },
+
+  createFlow: async (request: CreateFlowRequest): Promise<Flow> => {
+    const response = await apiClient.post<Flow>('/flows', request);
+    return response.data;
+  },
+
+  addState: async (flowId: string, request: CreateFlowStateRequest): Promise<FlowState> => {
+    const response = await apiClient.post<FlowState>(`/flows/${encodeURIComponent(flowId)}/states`, request);
+    return response.data;
+  },
+
+  addAction: async (flowId: string, stateId: string, request: CreateFlowActionRequest): Promise<FlowAction> => {
+    const response = await apiClient.post<FlowAction>(
+      `/flows/${encodeURIComponent(flowId)}/states/${encodeURIComponent(stateId)}/actions`,
+      request
+    );
+    return response.data;
+  },
+
+  getActionTemplates: async (): Promise<FlowActionTemplate[]> => {
+    const response = await apiClient.get<FlowActionTemplate[]>('/flows/action-templates');
+    return response.data;
+  },
+
+  createActionTemplate: async (request: CreateFlowActionTemplateRequest): Promise<FlowActionTemplate> => {
+    const response = await apiClient.post<FlowActionTemplate>('/flows/action-templates', request);
+    return response.data;
+  },
+
+  getRequiredActions: async (flowId: string, stateId: string): Promise<RequiredFlowActionsResponse> => {
+    const response = await apiClient.get<RequiredFlowActionsResponse>(
+      `/flows/${encodeURIComponent(flowId)}/states/${encodeURIComponent(stateId)}/required-actions`
+    );
+    return response.data;
+  },
+
+  getNextState: async (flowId: string, stateId: string, actionId?: string): Promise<NextFlowStateResponse> => {
+    const response = await apiClient.get<NextFlowStateResponse>(
+      `/flows/${encodeURIComponent(flowId)}/states/${encodeURIComponent(stateId)}/next-state`,
+      { params: actionId ? { actionId } : {} }
+    );
+    return response.data;
   },
 };

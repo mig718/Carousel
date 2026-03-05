@@ -102,6 +102,16 @@ const SideMenu: React.FC = () => {
     </svg>
   );
 
+  const iconFlows = (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2" />
+      <circle cx="18" cy="12" r="2" />
+      <circle cx="6" cy="18" r="2" />
+      <path d="M8 6h6l2 4" />
+      <path d="M8 18h6l2-4" />
+    </svg>
+  );
+
   const iconAdmin = (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M12 3l7 3v5c0 5-3.2 8-7 10-3.8-2-7-5-7-10V6l7-3z" />
@@ -153,6 +163,10 @@ const SideMenu: React.FC = () => {
           <NavLink to="/styles" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
             <span className="menu-icon">{iconStyles}</span>
             <span className="menu-text">Styles</span>
+          </NavLink>
+          <NavLink to="/flows" className={({ isActive }) => `menu-link ${isActive ? 'active' : ''}`}>
+            <span className="menu-icon">{iconFlows}</span>
+            <span className="menu-text">Flows</span>
           </NavLink>
         </div>
 

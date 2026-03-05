@@ -1,0 +1,96 @@
+.flow-actions-page {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.flow-actions-card {
+  border: 1px solid #dce7ff;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #ffffff, #f4f8ff);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flow-actions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.flow-actions-header h2 {
+  margin: 0;
+  color: #1f3b63;
+}
+
+.flow-actions-header button,
+.flow-actions-form button {
+  border: 1px solid #8aa3e7;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: 0 10px;
+  background: #f3f6ff;
+  cursor: pointer;
+}
+
+.flow-actions-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-actions-form input {
+  border: 1px solid #cfd8ea;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
+}
+
+.flow-actions-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flow-actions-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-actions-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.flow-template-item {
+  border: 1px solid #d5ddef;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.flow-template-item h3 {
+  margin: 0;
+  color: #1f3b63;
+  font-size: 0.95rem;
+}
+
+.flow-template-item p {
+  margin: 4px 0;
+  color: #334155;
+}
+
+.flow-template-item small {
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  .flow-actions-list,
+  .flow-actions-row {
+    grid-template-columns: 1fr;
+  }
+}

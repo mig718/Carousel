@@ -18,6 +18,26 @@ spring:
           uri: http://localhost:8004
           predicates:
             - Path=/api/roles/**
+        - id: styles-service
+          uri: http://localhost:8007
+          predicates:
+            - Path=/api/inventory/styles,/api/inventory/styles/**
+        - id: styles-service-docs
+          uri: http://localhost:8007
+          predicates:
+            - Path=/api/styles/v3/api-docs
+          filters:
+            - RewritePath=/api/styles/v3/api-docs, /api/inventory/v3/api-docs
+        - id: flow-service
+          uri: http://localhost:8008
+          predicates:
+            - Path=/api/flows,/api/flows/**
+        - id: flow-service-docs
+          uri: http://localhost:8008
+          predicates:
+            - Path=/api/flow/v3/api-docs
+          filters:
+            - RewritePath=/api/flow/v3/api-docs, /api/flows/v3/api-docs
         - id: inventory-service
           uri: http://localhost:8005
           predicates:

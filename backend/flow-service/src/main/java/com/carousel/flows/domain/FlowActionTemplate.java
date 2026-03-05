@@ -1,4 +1,4 @@
-package com.carousel.inventory.domain;
+package com.carousel.flows.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,29 +11,38 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "inventory_styles")
-public class Style {
+@Table(name = "flow_action_templates")
+public class FlowActionTemplate {
     @Id
     @Column(nullable = false, updatable = false)
     private String id;
+
     @Column(nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(nullable = false)
+    private String actionType;
 
-    @Column(columnDefinition = "TEXT")
-    private String imageUrls;
+    @Column(nullable = false)
+    private Boolean awaitable;
 
-    @Column(columnDefinition = "TEXT")
-    private String requiredItemIds;
+    @Column(nullable = false)
+    private Boolean requiresApproval;
+
+    @Column
+    private String approvalType;
+
+    @Column
+    private String approvalRole;
+
+    @Column(nullable = false)
+    private Boolean predefined;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    public Style() {
-    }
 
     public String getId() {
         return id;
@@ -51,28 +60,52 @@ public class Style {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getActionType() {
+        return actionType;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setActionType(String actionType) {
+        this.actionType = actionType;
     }
 
-    public String getImageUrls() {
-        return imageUrls;
+    public Boolean getAwaitable() {
+        return awaitable;
     }
 
-    public void setImageUrls(String imageUrls) {
-        this.imageUrls = imageUrls;
+    public void setAwaitable(Boolean awaitable) {
+        this.awaitable = awaitable;
     }
 
-    public String getRequiredItemIds() {
-        return requiredItemIds;
+    public Boolean getRequiresApproval() {
+        return requiresApproval;
     }
 
-    public void setRequiredItemIds(String requiredItemIds) {
-        this.requiredItemIds = requiredItemIds;
+    public void setRequiresApproval(Boolean requiresApproval) {
+        this.requiresApproval = requiresApproval;
+    }
+
+    public String getApprovalType() {
+        return approvalType;
+    }
+
+    public void setApprovalType(String approvalType) {
+        this.approvalType = approvalType;
+    }
+
+    public String getApprovalRole() {
+        return approvalRole;
+    }
+
+    public void setApprovalRole(String approvalRole) {
+        this.approvalRole = approvalRole;
+    }
+
+    public Boolean getPredefined() {
+        return predefined;
+    }
+
+    public void setPredefined(Boolean predefined) {
+        this.predefined = predefined;
     }
 
     public LocalDateTime getCreatedAt() {

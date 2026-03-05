@@ -7,4 +7,6 @@ user:user-service:./backend/user-service:8002:http://localhost:8002/api/users/he
 approve:approval-service:./backend/approval-service:8003:http://localhost:8003/api/approvals/health
 roles:role-service:./backend/role-service:8004:http://localhost:8004/api/roles/health
 inventory:inventory-service:./backend/inventory-service:8005:http://localhost:8005/api/inventory/health
-gateway:api-gateway:./backend/api-gateway:8000:http://localhost:8000/health
+styles:styles-service:./backend/styles-service:8007:http://localhost:8007/api/inventory/v3/api-docs
+flow:flow-service:./backend/flow-service:8008:http://localhost:8008/api/flows/v3/api-docs
+gateway:api-gateway:./backend/api-gateway:8000:http://localhost:8000/swagger-ui.html

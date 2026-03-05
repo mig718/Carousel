@@ -509,8 +509,6 @@ $overallStartupStartTime = Get-Date
 $startedProcesses = @()
 $serviceStatus = @()
 
-$healthServiceResult = $null
-
 # Build services array from ServiceMap
 $services = @()
 $allServices = Get-AllServiceShortcuts $ServiceMap
@@ -579,9 +577,6 @@ foreach ($serviceDef in $services) {
         $startedProcesses += $result.Process
     }
 
-    if ($serviceDef.Name -eq "health-service") {
-        $healthServiceResult = $result
-    }
 }
 
 $overallStartupSeconds = [Math]::Round((New-TimeSpan -Start $overallStartupStartTime -End (Get-Date)).TotalSeconds, 2)
@@ -642,7 +637,7 @@ if (-not [string]::IsNullOrWhiteSpace($Service)) {
 } else {
     Write-ColorOutput "Green" "$CheckMark Swagger UI: $swaggerUrl"
 }
-Write-ColorOutput "Yellow" "Logs: .\logs\auth-service.log, .\logs\user-service.log, .\logs\approval-service.log, .\logs\api-gateway.log, .\logs\health-service.log"
+Write-ColorOutput "Yellow" "Logs: .\logs\auth-service.log, .\logs\user-service.log, .\logs\approval-service.log, .\logs\role-service.log, .\logs\inventory-service.log, .\logs\styles-service.log, .\logs\flow-service.log, .\logs\api-gateway.log"
 Write-Host ""
 exit 0
 

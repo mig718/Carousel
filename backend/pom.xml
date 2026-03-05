@@ -17,6 +17,8 @@
         <module>approval-service</module>
         <module>role-service</module>
         <module>inventory-service</module>
+        <module>styles-service</module>
+        <module>flow-service</module>
         <module>api-gateway</module>
     </modules>
 

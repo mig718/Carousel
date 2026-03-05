@@ -180,37 +180,4 @@ public class InventoryController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/styles")
-    @Operation(summary = "Get styles", description = "List style templates for complete jewelry items")
-    public ResponseEntity<List<StyleDto>> getStyles(@RequestParam String requesterEmail) {
-        return ResponseEntity.ok(inventoryService.getStyles(requesterEmail));
-    }
-
-    @GetMapping("/styles/{styleId}")
-    @Operation(summary = "Get style details", description = "Fetch a single style template by ID")
-    public ResponseEntity<StyleDto> getStyleById(@PathVariable String styleId, @RequestParam String requesterEmail) {
-        return ResponseEntity.ok(inventoryService.getStyleById(styleId, requesterEmail));
-    }
-
-    @PostMapping("/styles")
-    @Operation(summary = "Create style", description = "Create a style template with images and required inventory items")
-    public ResponseEntity<StyleDto> createStyle(@RequestBody StyleRequest request, @RequestParam String requesterEmail) {
-        return ResponseEntity.ok(inventoryService.createStyle(request, requesterEmail));
-    }
-
-    @PutMapping("/styles/{styleId}")
-    @Operation(summary = "Update style", description = "Update style template details and required inventory items")
-    public ResponseEntity<StyleDto> updateStyle(
-            @PathVariable String styleId,
-            @RequestBody StyleRequest request,
-            @RequestParam String requesterEmail) {
-        return ResponseEntity.ok(inventoryService.updateStyle(styleId, request, requesterEmail));
-    }
-
-    @DeleteMapping("/styles/{styleId}")
-    @Operation(summary = "Delete style", description = "Delete a style template")
-    public ResponseEntity<Void> deleteStyle(@PathVariable String styleId, @RequestParam String requesterEmail) {
-        inventoryService.deleteStyle(styleId, requesterEmail);
-        return ResponseEntity.noContent().build();
-    }
 }
